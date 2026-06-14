@@ -136,7 +136,7 @@
             const [players, setPlayers] = useState([]);
             const [answers, setAnswers] = useState([]);
             const [dynamicQuestions, setDynamicQuestions] = useState(DEFAULT_QUESTIONS);
-            const [gameState, setGameState] = useState({ step: 'login', questionIndex: 0 }); 
+            const [gameState, setGameState] = useState({ step: 'login', questionIndex: 0, startedAt: null }); 
 
             const [selectedOption, setSelectedOption] = useState(null);
             const [timeLeft, setTimeLeft] = useState(30);
@@ -166,26 +166,26 @@
                 setSelectedOption(null);
             }, [gameState.questionIndex, gameState.step]);
 
-            // Timer Logic (Synced locally on all devices)
+            // Timer Logic (Synced based on server startedAt time)
             useEffect(() => {
                 let interval;
-                if (gameState.step === 'question') {
-                    setTimeLeft(30);
+                if (gameState.step === 'question' && gameState.startedAt) {
                     interval = setInterval(() => {
-                        setTimeLeft(prev => {
-                            const next = prev - 1;
-                            if (next <= 0 && isAdmin) {
-                                clearInterval(interval);
-                                updateGameState({ step: 'results' });
-                            }
-                            return Math.max(0, next);
-                        });
+                        const elapsed = Math.floor((Date.now() - gameState.startedAt) / 1000);
+                        const remaining = Math.max(0, 30 - elapsed);
+                        setTimeLeft(remaining);
+                        
+                        // אוטומציה של השרת למנהל
+                        if (remaining === 0 && isAdmin) {
+                            clearInterval(interval);
+                            updateGameState({ step: 'results' });
+                        }
                     }, 1000);
                 } else {
                     setTimeLeft(30);
                 }
                 return () => clearInterval(interval);
-            }, [gameState.step, isAdmin]);
+            }, [gameState.step, gameState.startedAt, isAdmin]);
 
             useEffect(() => {
                 if (gameState.step === 'leaderboard') {
@@ -218,7 +218,11 @@
             };
 
             const updateGameState = async (newState) => {
-                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('config').doc('state').set({...gameState, ...newState}, { merge: true });
+                const updatePayload = { ...newState };
+                if (newState.step === 'question') {
+                    updatePayload.startedAt = Date.now();
+                }
+                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('config').doc('state').set({...gameState, ...updatePayload}, { merge: true });
             };
 
             const resetGame = async () => {
@@ -230,7 +234,7 @@
                 pS.forEach(d => batch.delete(d.ref));
                 aS.forEach(d => batch.delete(d.ref));
                 await batch.commit();
-                await updateGameState({ step: 'lobby', questionIndex: 0 });
+                await updateGameState({ step: 'lobby', questionIndex: 0, startedAt: null });
                 alert("המשחק אופס בהצלחה.");
             };
 
@@ -327,7 +331,7 @@
                             </div>
                             
                             <div className="flex justify-center w-full">
-                                <Timer timeLeft={timeLeft} />
+                                <Timer timeLeft={timeLeft} maxTime={30} />
                             </div>
 
                             <div className="glass-panel p-6 rounded-[2rem] w-full mb-4 shadow-2xl border-t-4 border-t-blue-500">
@@ -337,16 +341,23 @@
                             <div className="grid grid-cols-1 gap-3 w-full pb-8">
                                 {currentQ.options.map(opt => {
                                     const isSelected = selectedOption === opt.id;
+                                    
+                                    // הגדרת עיצוב אחיד לכפתורים בזמן בחירה / סיום זמן
+                                    let btnClasses = "p-4 rounded-2xl border-2 text-right font-bold transition-all text-base md:text-lg flex items-center justify-between ";
+                                    if (isSelected) {
+                                        btnClasses += "bg-blue-600 border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.5)] scale-[1.02] opacity-100";
+                                    } else if (selectedOption !== null || isTimeUp) {
+                                        btnClasses += "opacity-40 bg-slate-800/40 border-slate-800 cursor-not-allowed";
+                                    } else {
+                                        btnClasses += "bg-slate-800/60 border-slate-600 hover:border-blue-400 hover:bg-slate-700 opacity-100";
+                                    }
+
                                     return (
                                         <button 
                                             key={opt.id} 
                                             onClick={() => submitAnswer(opt.id)}
                                             disabled={selectedOption !== null || isTimeUp}
-                                            className={`p-4 rounded-2xl border-2 text-right font-bold transition-all text-base md:text-lg flex items-center justify-between
-                                                ${selectedOption === null && !isTimeUp ? 'bg-slate-800/60 border-slate-600 hover:border-blue-400 hover:bg-slate-700' : ''}
-                                                ${isSelected ? 'bg-blue-600 border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.5)] scale-[1.02]' : ''}
-                                                ${(selectedOption !== null && !isSelected) || isTimeUp ? 'opacity-40 bg-slate-800/40 border-slate-800 cursor-not-allowed' : ''}
-                                            `}
+                                            className={btnClasses}
                                         >
                                             <span>{opt.text}</span>
                                             {isSelected && (
@@ -403,15 +414,24 @@
 
                 if (gameState.step === 'leaderboard') {
                     const myRank = [...players].sort((a,b) => (b.score||0)-(a.score||0)).findIndex(p => p.id === user.uid) + 1;
+                    const isLastQuestion = gameState.questionIndex >= dynamicQuestions.length - 1;
+
                     return (
                         <div className="flex flex-col items-center justify-center min-h-screen p-4 animate-slide text-center overflow-y-auto">
                             <div className="glass-panel p-10 rounded-[3rem] shadow-[0_0_50px_rgba(234,179,8,0.2)] max-w-md w-full border-2 border-yellow-500/50 bg-gradient-to-b from-yellow-900/20 to-slate-900">
                                 <div className="text-6xl md:text-7xl mb-6 drop-shadow-2xl">🏆</div>
                                 <h2 className="text-2xl md:text-3xl font-black mb-4 text-white">הבט במסך המרכזי!</h2>
                                 <p className="text-lg md:text-xl text-slate-300 mb-6">המיקום שלך כרגע: <strong className="text-yellow-400 text-3xl md:text-4xl block mt-2 drop-shadow-md">#{myRank}</strong></p>
-                                <div className="text-sm md:text-md text-blue-200 font-bold bg-blue-900/40 p-4 rounded-xl border border-blue-500/30 animate-pulse">
-                                    הכן את עצמך לשאלה הבאה...
-                                </div>
+                                
+                                {isLastQuestion ? (
+                                    <div className="text-sm md:text-md text-green-300 font-black bg-green-900/40 p-4 rounded-xl border border-green-500/30">
+                                        כל הכבוד! סיום המשחק 🎉
+                                    </div>
+                                ) : (
+                                    <div className="text-sm md:text-md text-blue-200 font-bold bg-blue-900/40 p-4 rounded-xl border border-blue-500/30 animate-pulse">
+                                        הכן את עצמך לשאלה הבאה...
+                                    </div>
+                                )}
                             </div>
                         </div>
                     );
@@ -463,31 +483,36 @@
                             {gameState.step === 'results' && currentQ && (
                                 <div className="flex flex-col h-full animate-slide w-full justify-center">
                                     <h2 className="text-3xl md:text-4xl font-black mb-6 text-center text-blue-300 uppercase tracking-widest shrink-0">תוצאות השאלה</h2>
-                                    <div className="space-y-4 flex-1 flex flex-col justify-center">
+                                    <div className="space-y-4 flex-1 flex flex-col justify-center max-w-5xl mx-auto w-full">
                                         {currentQ.options.map(opt => {
                                             const count = currentAnswers.filter(a => a.answerId === opt.id).length;
                                             const pct = currentAnswers.length ? Math.round((count / currentAnswers.length) * 100) : 0;
                                             return (
-                                                <div key={opt.id} className={`relative overflow-hidden rounded-2xl border-2 md:border-4 p-4 md:p-5 flex justify-between items-center z-10 shadow-xl ${opt.correct ? 'border-green-500 bg-green-900/40' : 'border-slate-700 bg-slate-800/60'}`}>
-                                                    <div className="absolute top-0 right-0 h-full bg-gradient-to-l from-blue-600/40 to-indigo-600/40 -z-10 transition-all duration-1000" style={{ width: `${pct}%` }}></div>
+                                                <div key={opt.id} className="flex items-center gap-4 w-full">
                                                     
-                                                    {/* שינוי האייקון למשהו ברור ומרשים */}
-                                                    <span className={`font-black text-2xl md:text-3xl z-20 w-3/4 text-right flex items-center gap-3 ${opt.correct ? 'text-green-300 drop-shadow-md' : 'text-slate-200'}`}>
-                                                        {opt.text} 
+                                                    {/* אייקון ה"וי" יושב כעת בחוץ, בחלק הימני, עם ריווח קבוע */}
+                                                    <div className="w-12 h-12 shrink-0 flex items-center justify-center">
                                                         {opt.correct && (
-                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="w-8 h-8 text-green-400 drop-shadow-[0_0_12px_rgba(74,222,128,0.9)]">
+                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="w-12 h-12 text-green-400 drop-shadow-[0_0_12px_rgba(74,222,128,0.9)]">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                                             </svg>
                                                         )}
-                                                    </span>
+                                                    </div>
                                                     
-                                                    <span className="font-black text-3xl md:text-4xl z-20 text-white drop-shadow-md">{count} <span className="text-xl md:text-2xl text-slate-300">({pct}%)</span></span>
+                                                    {/* קופסת התשובה ואחוזים */}
+                                                    <div className={`flex-1 relative overflow-hidden rounded-2xl border-2 md:border-4 p-4 md:p-5 flex justify-between items-center z-10 shadow-xl ${opt.correct ? 'border-green-500 bg-green-900/40' : 'border-slate-700 bg-slate-800/60'}`}>
+                                                        <div className="absolute top-0 right-0 h-full bg-gradient-to-l from-blue-600/40 to-indigo-600/40 -z-10 transition-all duration-1000" style={{ width: `${pct}%` }}></div>
+                                                        <span className={`font-black text-2xl md:text-3xl z-20 text-right ${opt.correct ? 'text-green-300 drop-shadow-md' : 'text-slate-200'}`}>
+                                                            {opt.text}
+                                                        </span>
+                                                        <span className="font-black text-3xl md:text-4xl z-20 text-white drop-shadow-md">{count} <span className="text-xl md:text-2xl text-slate-300">({pct}%)</span></span>
+                                                    </div>
                                                 </div>
                                             );
                                         })}
                                     </div>
 
-                                    {/* המשפט המסכם - כעת ישב ברווח מתחת ללא קשר ללוח הבקרה */}
+                                    {/* המשפט המסכם */}
                                     <div className="mt-10 shrink-0 bg-gradient-to-r from-blue-600/90 to-indigo-600/90 p-5 md:p-8 rounded-3xl border-2 border-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.6)] text-center transform hover:scale-[1.01] transition-transform duration-500 backdrop-blur-xl">
                                         <p className="text-blue-100 font-bold text-sm md:text-base mb-2 uppercase tracking-widest drop-shadow">משפט מסכם:</p>
                                         <p className="text-3xl md:text-4xl font-black text-white leading-tight drop-shadow-lg">{currentQ.summary}</p>
