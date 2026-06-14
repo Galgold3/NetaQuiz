@@ -1,1 +1,571 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ברוכים הבאים לחידון</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
+    <style>
+        body { font-family: 'Heebo', sans-serif; margin: 0; direction: rtl; background-color: #0f172a; }
+        .glass-panel { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .animate-slide { animation: slide-up 0.4s ease-out both; }
+        @keyframes slide-up { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .animate-pop { animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
+        @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        /* Custom Scrollbar for admin panel */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-950 text-white min-h-screen">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // הוגדרו נתוני ה-Firebase החדשים
+        const firebaseConfig = {
+            apiKey: "AIzaSyCKM8oe0LNgk8FGZ2vj0rhEV9rCkKRkDGE",
+            authDomain: "netaquiz.firebaseapp.com",
+            projectId: "netaquiz",
+            storageBucket: "netaquiz.firebasestorage.app",
+            messagingSenderId: "1014660940306",
+            appId: "1:1014660940306:web:62efbbbfc70baf25570ecb",
+            measurementId: "G-R91ZT5ZEN5"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        
+        // מזהה פנימי חדש במסד הנתונים
+        const appId = 'nta-quiz-dark-v1';
+
+        const DEFAULT_QUESTIONS = [
+            { 
+                id: 'q1', 
+                question: "מהם הדברים המרכזיים שיש לוודא טרם הגעה לתדריך למשלחת?", 
+                options: [
+                    { id: 'a', text: "אין צורך בהכנה, התדריך מספק את כל המידע", correct: false },
+                    { id: 'b', text: "וידוא רשימת משתתפים, אישורי הורים, ומסלול מעודכן", correct: true },
+                    { id: 'c', text: "רכישת כרטיסי טיסה ואריזת מזוודות בלבד", correct: false },
+                    { id: 'd', text: "הכנת רשימת קניות לדיוטי פרי", correct: false }
+                ],
+                summary: "הכנה מוקדמת היא הבסיס לביטחון המשלחת ולניהול נכון של התדריך."
+            },
+            { 
+                id: 'q2', 
+                question: "היכן ניתן לראות את רמת האיום בכל מדינה?", 
+                options: [
+                    { id: 'a', text: "באתר השגרירות המקומית", correct: false },
+                    { id: 'b', text: "דרך סוכן הנסיעות של המשלחת", correct: false },
+                    { id: 'c', text: "באתר המטה לביטחון לאומי (המל\"ל)", correct: true },
+                    { id: 'd', text: "בחדשות וברשתות החברתיות", correct: false }
+                ],
+                summary: "אתר המטה לביטחון לאומי (המל\"ל) הוא המקור הרשמי והמוסמך ביותר להנחיות ביטחון למטיילים בחו\"ל."
+            },
+            { 
+                id: 'q3', 
+                question: "מהי המטרה המרכזית של תדריך למשלחת?", 
+                options: [
+                    { id: 'a', text: "להפחיד את הנוסעים כדי שיזהרו יותר", correct: false },
+                    { id: 'b', text: "להעביר את אותה המצגת בדיוק לכל קבוצה", correct: false },
+                    { id: 'c', text: "להיות מותאם ספציפית לאופי המשלחת ולעודד קשב אקטיבי", correct: true },
+                    { id: 'd', text: "למלא חובה בירוקרטית של משרד החינוך", correct: false }
+                ],
+                summary: "אפקטיביות של תדריך נמדדת ביכולת שלו להיות רלוונטי לקבוצה וליצור אצלם קשב אקטיבי."
+            },
+            { 
+                id: 'q4', 
+                question: "האם הורים נחשבים מלווים רשמיים?", 
+                options: [
+                    { id: 'a', text: "כן, בכל מצב הורה נחשב מלווה מבוגר", correct: false },
+                    { id: 'b', text: "לא, למעט מקרים חריגים מאושרים מראש (כמו מסעות לפולין)", correct: true },
+                    { id: 'c', text: "כן, בתנאי שהם משלמים על עצמם", correct: false },
+                    { id: 'd', text: "רק אם הם אנשי כוחות הביטחון", correct: false }
+                ],
+                summary: "הנחיות משרד החינוך והביטחון ברורות מאוד לגבי הגדרת מלווים כדי להבטיח אחריותיות מקצועית."
+            }
+        ];
+
+        function App() {
+            const [user, setUser] = useState(null);
+            const [playerName, setPlayerName] = useState('');
+            const [isAdmin, setIsAdmin] = useState(false);
+            const [adminPass, setAdminPass] = useState('');
+            const [adminTab, setAdminTab] = useState('game'); // 'game' or 'questions'
+            
+            // Shared DB State
+            const [players, setPlayers] = useState([]);
+            const [answers, setAnswers] = useState([]);
+            const [dynamicQuestions, setDynamicQuestions] = useState(DEFAULT_QUESTIONS);
+            const [gameState, setGameState] = useState({ step: 'login', questionIndex: 0 }); 
+
+            // Local Player State
+            const [selectedOption, setSelectedOption] = useState(null);
+
+            useEffect(() => {
+                const unsubAuth = auth.onAuthStateChanged(u => { if (!u) auth.signInAnonymously(); setUser(u); });
+                return unsubAuth;
+            }, []);
+
+            useEffect(() => {
+                if (!user) return;
+                const path = db.collection('artifacts').doc(appId).collection('public').doc('data');
+                
+                const unsubQ = path.collection('config').doc('questions').onSnapshot(s => { 
+                    if (s.exists) setDynamicQuestions(s.data().list); 
+                });
+                const unsubState = path.collection('config').doc('state').onSnapshot(s => { 
+                    if (s.exists) setGameState(s.data()); 
+                });
+                const unsubP = path.collection('players').onSnapshot(s => setPlayers(s.docs.map(d => ({id: d.id, ...d.data()}))));
+                const unsubA = path.collection('answers').onSnapshot(s => setAnswers(s.docs.map(d => ({id: d.id, ...d.data()}))));
+                
+                return () => { unsubQ(); unsubState(); unsubP(); unsubA(); };
+            }, [user]);
+
+            useEffect(() => {
+                setSelectedOption(null);
+            }, [gameState.questionIndex, gameState.step]);
+
+            const handleJoin = async () => {
+                if (!playerName.trim()) return;
+                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(user.uid).set({name: playerName, score: 0});
+            };
+
+            const submitAnswer = async (optId) => {
+                if (selectedOption !== null || gameState.step !== 'question') return;
+                
+                setSelectedOption(optId);
+                const q = dynamicQuestions[gameState.questionIndex];
+                const isCorrect = q.options.find(o => o.id === optId)?.correct || false;
+
+                if (isCorrect) {
+                    const p = players.find(p => p.id === user.uid);
+                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(user.uid).update({ score: (p?.score || 0) + 100 });
+                }
+
+                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('answers').add({
+                    playerId: user.uid, playerName, questionId: q.id, answerId: optId, isCorrect, timestamp: Date.now()
+                });
+            };
+
+            // --- ADMIN FUNCTIONS ---
+            const updateGameState = async (newState) => {
+                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('config').doc('state').set({...gameState, ...newState}, { merge: true });
+            };
+
+            const resetGame = async () => {
+                if (!confirm("למחוק את כל נתוני המשחק ולהתחיל מחדש?")) return;
+                const path = db.collection('artifacts').doc(appId).collection('public').doc('data');
+                const pS = await path.collection('players').get();
+                const aS = await path.collection('answers').get();
+                const batch = db.batch();
+                pS.forEach(d => batch.delete(d.ref));
+                aS.forEach(d => batch.delete(d.ref));
+                await batch.commit();
+                await updateGameState({ step: 'lobby', questionIndex: 0 });
+                alert("המשחק אופס והועבר ללובי.");
+            };
+
+            const saveQuestions = async (newQuestions) => {
+                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('config').doc('questions').set({ list: newQuestions });
+            };
+
+            const addQuestion = () => {
+                const newQ = {
+                    id: 'q_' + Date.now(),
+                    question: "שאלה חדשה...",
+                    options: [
+                        { id: 'a', text: "תשובה 1", correct: true },
+                        { id: 'b', text: "תשובה 2", correct: false },
+                        { id: 'c', text: "תשובה 3", correct: false },
+                        { id: 'd', text: "תשובה 4", correct: false }
+                    ],
+                    summary: "משפט מסכם לשאלה."
+                };
+                saveQuestions([...dynamicQuestions, newQ]);
+            };
+
+            const deleteQuestion = (id) => {
+                if(!confirm("למחוק שאלה זו?")) return;
+                saveQuestions(dynamicQuestions.filter(q => q.id !== id));
+            };
+
+            const updateQuestionData = (qIdx, field, value) => {
+                const n = [...dynamicQuestions];
+                n[qIdx][field] = value;
+                saveQuestions(n);
+            };
+
+            const updateOptionText = (qIdx, oIdx, value) => {
+                const n = [...dynamicQuestions];
+                n[qIdx].options[oIdx].text = value;
+                saveQuestions(n);
+            };
+
+            const setCorrectOption = (qIdx, oIdx) => {
+                const n = [...dynamicQuestions];
+                n[qIdx].options.forEach(o => o.correct = false);
+                n[qIdx].options[oIdx].correct = true;
+                saveQuestions(n);
+            };
+
+            // --- COMPUTED VALUES ---
+            const leaderboard = useMemo(() => [...players].sort((a,b) => (b.score||0)-(a.score||0)).slice(0, 5), [players]);
+            const currentPlayer = players.find(p => p.id === user?.uid);
+            const currentQ = dynamicQuestions[gameState.questionIndex];
+            const currentAnswers = answers.filter(a => a.questionId === currentQ?.id);
+
+            // ==========================================
+            // PLAYER VIEWS
+            // ==========================================
+            if (!isAdmin) {
+                // Not logged in yet
+                if (!currentPlayer) {
+                    return (
+                        <div className="flex flex-col items-center justify-center min-h-screen p-4 w-full max-w-md mx-auto animate-slide">
+                            <div className="text-center mb-8">
+                                <div className="text-6xl mb-4">✈️</div>
+                                <h1 className="text-3xl font-black text-blue-300">תדריך משלחת</h1>
+                            </div>
+                            <div className="glass-panel p-8 rounded-3xl w-full text-center shadow-2xl">
+                                <h2 className="text-xl font-bold mb-6 text-white">הכנס שם להצטרפות למשחק</h2>
+                                <input type="text" className="w-full p-4 rounded-xl bg-slate-800/50 border border-blue-400/30 mb-6 text-center text-xl font-bold text-white outline-none focus:border-blue-400 focus:bg-slate-800" placeholder="איך קוראים לך?" value={playerName} onChange={e => setPlayerName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleJoin()} />
+                                <button onClick={handleJoin} className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-xl transition-all shadow-lg shadow-blue-900/50">הצטרפות</button>
+                            </div>
+                            <button onClick={() => { const p = prompt("סיסמת מנהל:"); if(p === '12345') setIsAdmin(true); }} className="mt-12 text-slate-500 hover:text-slate-300 text-sm font-bold transition-all">כניסת מנהל ⚙️</button>
+                        </div>
+                    );
+                }
+
+                // Logged in, waiting for Admin
+                if (gameState.step === 'login' || gameState.step === 'lobby') {
+                    return (
+                        <div className="flex flex-col items-center justify-center min-h-screen p-4 animate-slide text-center">
+                            <div className="glass-panel p-10 rounded-3xl shadow-2xl max-w-md w-full">
+                                <h2 className="text-3xl font-black mb-4 text-blue-300">היי {currentPlayer.name}! 👋</h2>
+                                <p className="text-xl text-slate-300 mb-8">המשחק יתחיל ברגע שהמנהל יאשר...</p>
+                                <div className="animate-pulse flex justify-center space-x-2 space-x-reverse">
+                                    <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+                                    <div className="w-4 h-4 bg-blue-400 rounded-full animation-delay-200"></div>
+                                    <div className="w-4 h-4 bg-blue-300 rounded-full animation-delay-400"></div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                }
+
+                // Answering a question
+                if (gameState.step === 'question' && currentQ) {
+                    return (
+                        <div className="flex flex-col items-center min-h-screen p-4 w-full max-w-2xl mx-auto pt-12 animate-slide">
+                            <div className="w-full flex justify-between items-center mb-6">
+                                <span className="bg-slate-800/50 px-4 py-1 rounded-full text-sm font-bold text-blue-300 border border-blue-500/30">שאלה {gameState.questionIndex + 1} / {dynamicQuestions.length}</span>
+                                <span className="font-bold">{currentPlayer.name} ⭐ {currentPlayer.score}</span>
+                            </div>
+                            
+                            <div className="glass-panel p-8 rounded-[2rem] w-full mb-8 shadow-2xl border-t-4 border-t-blue-500">
+                                <h2 className="text-2xl font-black leading-snug text-center">{currentQ.question}</h2>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4 w-full">
+                                {currentQ.options.map(opt => {
+                                    const isSelected = selectedOption === opt.id;
+                                    return (
+                                        <button 
+                                            key={opt.id} 
+                                            onClick={() => submitAnswer(opt.id)}
+                                            disabled={selectedOption !== null}
+                                            className={`p-5 rounded-2xl border-2 text-right font-bold transition-all text-lg
+                                                ${selectedOption === null ? 'bg-slate-800/60 border-slate-600 hover:border-blue-400 hover:bg-slate-700' : ''}
+                                                ${isSelected ? 'bg-blue-600 border-blue-400 shadow-lg shadow-blue-900/50 scale-[1.02]' : ''}
+                                                ${selectedOption !== null && !isSelected ? 'opacity-50 bg-slate-800/40 border-slate-700' : ''}
+                                            `}
+                                        >
+                                            {opt.text}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            
+                            {selectedOption !== null && (
+                                <div className="mt-8 text-blue-300 font-bold animate-pulse text-center">
+                                    התשובה נקלטה! ממתינים לכולם...
+                                </div>
+                            )}
+                        </div>
+                    );
+                }
+
+                // Results view for player
+                if (gameState.step === 'results' && currentQ) {
+                    const myAnswerDoc = answers.find(a => a.playerId === user.uid && a.questionId === currentQ.id);
+                    const isCorrect = myAnswerDoc?.isCorrect;
+                    const correctOpt = currentQ.options.find(o => o.correct);
+
+                    return (
+                        <div className="flex flex-col items-center justify-center min-h-screen p-4 animate-pop text-center">
+                            <div className={`glass-panel p-12 rounded-[3rem] shadow-2xl border-t-8 w-full max-w-md ${isCorrect ? 'border-t-green-500 bg-green-900/20' : 'border-t-red-500 bg-red-900/20'}`}>
+                                <div className="text-8xl mb-6">{isCorrect ? "✅" : "❌"}</div>
+                                <h2 className={`text-4xl font-black mb-4 ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>
+                                    {isCorrect ? "צדקת!" : "טעות..."}
+                                </h2>
+                                {!isCorrect && correctOpt && (
+                                    <div className="mt-6 bg-slate-900/50 p-4 rounded-xl border border-slate-700 text-right">
+                                        <p className="text-sm text-slate-400 mb-1">התשובה הנכונה הייתה:</p>
+                                        <p className="font-bold text-white">{correctOpt.text}</p>
+                                    </div>
+                                )}
+                                <div className="mt-8 pt-6 border-t border-white/10 text-xl font-bold text-blue-200">
+                                    ניקוד נוכחי: {currentPlayer.score} נק'
+                                </div>
+                            </div>
+                        </div>
+                    );
+                }
+
+                // Leaderboard / waiting for next question
+                if (gameState.step === 'leaderboard') {
+                    const myRank = [...players].sort((a,b) => (b.score||0)-(a.score||0)).findIndex(p => p.id === user.uid) + 1;
+                    return (
+                        <div className="flex flex-col items-center justify-center min-h-screen p-4 animate-slide text-center">
+                            <div className="glass-panel p-10 rounded-[3rem] shadow-2xl max-w-md w-full border-t-4 border-t-yellow-500">
+                                <div className="text-6xl mb-6">🏆</div>
+                                <h2 className="text-2xl font-black mb-2 text-white">הבט במסך המרכזי לטבלת המובילים!</h2>
+                                <p className="text-lg text-slate-300 mb-6">המיקום שלך כרגע: <strong className="text-yellow-400 text-2xl">{myRank}</strong></p>
+                                <div className="text-sm text-blue-300 bg-blue-900/40 p-3 rounded-lg border border-blue-500/30">
+                                    הכן את עצמך לשאלה הבאה...
+                                </div>
+                            </div>
+                        </div>
+                    );
+                }
+
+                return null;
+            }
+
+            // ==========================================
+            // ADMIN VIEW
+            // ==========================================
+            return (
+                <div className="min-h-screen flex flex-col items-center p-4 w-full">
+                    <nav className="w-full max-w-5xl flex flex-wrap justify-between items-center glass-panel p-4 rounded-2xl shadow-lg mb-6 sticky top-4 z-50">
+                        <div className="font-black text-2xl text-blue-300 flex items-center gap-2">
+                            <span>⚙️ פאנל ניהול</span>
+                            <span className="text-sm bg-blue-900 text-blue-200 px-3 py-1 rounded-full border border-blue-700 font-normal">
+                                {players.length} משתתפים
+                            </span>
+                        </div>
+                        <div className="flex gap-2 mt-4 sm:mt-0">
+                            <button onClick={() => setAdminTab('game')} className={`px-5 py-2 rounded-xl font-bold transition-all ${adminTab === 'game' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}>ניהול משחק</button>
+                            <button onClick={() => setAdminTab('questions')} className={`px-5 py-2 rounded-xl font-bold transition-all ${adminTab === 'questions' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}>עריכת שאלות</button>
+                            <button onClick={() => setIsAdmin(false)} className="px-5 py-2 rounded-xl font-bold bg-red-900/50 text-red-300 hover:bg-red-800 border border-red-800 mr-4">יציאה</button>
+                        </div>
+                    </nav>
+
+                    <main className="w-full max-w-5xl pb-20">
+                        
+                        {/* --- ADMIN: GAME CONTROLLER --- */}
+                        {adminTab === 'game' && (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                
+                                {/* Right Sidebar: Controls */}
+                                <div className="md:col-span-1 space-y-4">
+                                    <div className="glass-panel p-6 rounded-2xl shadow-xl">
+                                        <h3 className="font-black text-xl mb-4 border-b border-white/10 pb-2 text-blue-300">בקרת משחק</h3>
+                                        
+                                        <div className="space-y-3">
+                                            <div className="text-sm text-slate-400 mb-1">סטטוס נוכחי: <strong className="text-white bg-slate-800 px-2 py-1 rounded">{
+                                                gameState.step === 'lobby' ? 'המתנה בלובי' :
+                                                gameState.step === 'question' ? 'שאלה באוויר' :
+                                                gameState.step === 'results' ? 'מסך תוצאות' :
+                                                gameState.step === 'leaderboard' ? 'טבלת מובילים' : gameState.step
+                                            }</strong></div>
+                                            
+                                            <button onClick={() => updateGameState({ step: 'lobby', questionIndex: 0 })} className="w-full bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-bold border border-slate-600">
+                                                🏠 חזור ללובי מתנה
+                                            </button>
+                                            
+                                            {gameState.step === 'lobby' && (
+                                                <button onClick={() => updateGameState({ step: 'question', questionIndex: 0 })} className="w-full bg-green-600 hover:bg-green-500 text-white py-4 rounded-xl font-black text-lg shadow-lg shadow-green-900/50">
+                                                    🚀 התחל משחק (שאלה 1)
+                                                </button>
+                                            )}
+
+                                            {gameState.step === 'question' && (
+                                                <button onClick={() => updateGameState({ step: 'results' })} className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-lg shadow-lg shadow-blue-900/50">
+                                                    📊 עצור והצג תוצאות
+                                                </button>
+                                            )}
+
+                                            {gameState.step === 'results' && (
+                                                <button onClick={() => updateGameState({ step: 'leaderboard' })} className="w-full bg-yellow-600 hover:bg-yellow-500 text-white py-4 rounded-xl font-black text-lg shadow-lg shadow-yellow-900/50">
+                                                    🏆 הצג טבלת מובילים
+                                                </button>
+                                            )}
+
+                                            {gameState.step === 'leaderboard' && (
+                                                <div className="pt-4 space-y-3 border-t border-white/10">
+                                                    {gameState.questionIndex < dynamicQuestions.length - 1 ? (
+                                                        <button onClick={() => updateGameState({ step: 'question', questionIndex: gameState.questionIndex + 1 })} className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-lg shadow-lg shadow-blue-900/50">
+                                                            ➔ המשך לשאלה {gameState.questionIndex + 2}
+                                                        </button>
+                                                    ) : (
+                                                        <div className="bg-green-900/50 text-green-300 p-4 rounded-xl text-center font-bold border border-green-700">
+                                                            הגענו לסוף השאלות! 🎉
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="mt-8 pt-6 border-t border-white/10">
+                                            <button onClick={resetGame} className="w-full bg-red-900/50 hover:bg-red-800 text-red-200 py-2 rounded-xl font-bold border border-red-800 text-sm">
+                                                🗑️ איפוס מוחלט של המשחק
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Main Screen Preview */}
+                                <div className="md:col-span-2">
+                                    <div className="glass-panel p-8 rounded-3xl shadow-2xl min-h-[500px] flex flex-col relative border-4 border-slate-800 bg-slate-900/80">
+                                        <div className="absolute top-4 left-4 bg-slate-800 px-3 py-1 rounded text-xs font-bold text-slate-400">תצוגת מסך מרכזי</div>
+                                        
+                                        {/* Lobby View */}
+                                        {gameState.step === 'lobby' && (
+                                            <div className="flex-1 flex flex-col items-center justify-center text-center animate-slide">
+                                                <h1 className="text-5xl font-black mb-8 text-blue-400">הצטרפו למשחק!</h1>
+                                                <div className="text-2xl text-slate-300 mb-12">ממתינים לשחקנים... ({players.length})</div>
+                                                <div className="flex flex-wrap gap-3 justify-center max-w-2xl">
+                                                    {players.map(p => <span key={p.id} className="bg-slate-800 px-4 py-2 rounded-full font-bold border border-slate-600">{p.name}</span>)}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Question View */}
+                                        {gameState.step === 'question' && currentQ && (
+                                            <div className="flex-1 flex flex-col animate-slide">
+                                                <div className="text-center mb-8">
+                                                    <span className="text-blue-400 font-bold text-xl">שאלה {gameState.questionIndex + 1}</span>
+                                                    <h2 className="text-4xl font-black mt-4 leading-snug">{currentQ.question}</h2>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4 mt-auto mb-10">
+                                                    {currentQ.options.map((opt, i) => (
+                                                        <div key={opt.id} className="bg-slate-800/80 p-6 rounded-2xl border-2 border-slate-700 text-2xl font-bold text-center flex items-center justify-center min-h-[120px]">
+                                                            {opt.text}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="text-center bg-blue-900/40 py-3 rounded-xl border border-blue-500/30 font-bold text-blue-200">
+                                                    ענו עד כה: {currentAnswers.length} / {players.length}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Results View */}
+                                        {gameState.step === 'results' && currentQ && (
+                                            <div className="flex-1 flex flex-col animate-slide">
+                                                <h2 className="text-3xl font-black mb-8 text-center text-blue-300">תוצאות השאלה</h2>
+                                                
+                                                <div className="space-y-4 mb-8">
+                                                    {currentQ.options.map(opt => {
+                                                        const count = currentAnswers.filter(a => a.answerId === opt.id).length;
+                                                        const pct = currentAnswers.length ? Math.round((count / currentAnswers.length) * 100) : 0;
+                                                        return (
+                                                            <div key={opt.id} className={`relative overflow-hidden rounded-xl border-2 p-4 flex justify-between items-center z-10 ${opt.correct ? 'border-green-500 bg-green-900/30' : 'border-slate-700 bg-slate-800/50'}`}>
+                                                                <div className="absolute top-0 right-0 h-full bg-blue-600/30 -z-10 transition-all duration-1000" style={{ width: `${pct}%` }}></div>
+                                                                <span className={`font-bold text-xl z-20 ${opt.correct ? 'text-green-300' : 'text-slate-200'}`}>
+                                                                    {opt.text} {opt.correct && "✅"}
+                                                                </span>
+                                                                <span className="font-black text-2xl z-20">{count} ({pct}%)</span>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+
+                                                <div className="mt-auto bg-slate-800 p-6 rounded-2xl border border-blue-500/30 border-r-4 border-r-blue-500 text-right">
+                                                    <p className="text-blue-400 font-bold text-sm mb-2">משפט מסכם מנהל:</p>
+                                                    <p className="text-2xl font-bold">{currentQ.summary}</p>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Leaderboard View */}
+                                        {gameState.step === 'leaderboard' && (
+                                            <div className="flex-1 flex flex-col items-center justify-center animate-slide">
+                                                <h2 className="text-4xl font-black mb-10 text-yellow-400">🏆 המובילים 🏆</h2>
+                                                <div className="w-full max-w-md space-y-4">
+                                                    {leaderboard.map((p, i) => (
+                                                        <div key={p.id} className={`flex justify-between items-center p-5 rounded-2xl font-black text-2xl ${i === 0 ? 'bg-yellow-600/20 border border-yellow-500 text-yellow-400 scale-110 shadow-lg shadow-yellow-900/50 mb-6' : 'bg-slate-800 border border-slate-700'}`}>
+                                                            <span>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)+'.'} {p.name}</span>
+                                                            <span>{p.score} נק'</span>
+                                                        </div>
+                                                    ))}
+                                                    {leaderboard.length === 0 && <div className="text-center text-slate-400">טרם נצברו נקודות</div>}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* --- ADMIN: QUESTIONS EDITOR --- */}
+                        {adminTab === 'questions' && (
+                            <div className="space-y-6 animate-slide">
+                                <div className="flex justify-between items-center">
+                                    <h2 className="text-2xl font-black text-blue-300">ניהול שאלות ({dynamicQuestions.length})</h2>
+                                    <button onClick={addQuestion} className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg">➕ הוסף שאלה חדשה</button>
+                                </div>
+                                
+                                {dynamicQuestions.map((q, qIdx) => (
+                                    <div key={q.id} className="glass-panel p-8 rounded-3xl shadow-xl space-y-5 relative">
+                                        <button onClick={() => deleteQuestion(q.id)} className="absolute top-6 left-6 text-red-400 hover:text-red-300 bg-red-900/30 p-2 rounded-lg font-bold transition-all">🗑️ מחק שאלה</button>
+                                        
+                                        <div>
+                                            <label className="block text-sm font-bold text-blue-400 mb-2">שאלה {qIdx + 1}:</label>
+                                            <input type="text" className="w-full p-4 bg-slate-800 border border-slate-600 rounded-xl font-bold text-lg text-white outline-none focus:border-blue-500" value={q.question} onChange={e => updateQuestionData(qIdx, 'question', e.target.value)} />
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-900/50 p-6 rounded-2xl border border-slate-700/50">
+                                            {q.options.map((opt, oIdx) => (
+                                                <div key={opt.id} className={`flex items-center gap-3 p-3 rounded-xl border ${opt.correct ? 'bg-green-900/30 border-green-500/50' : 'bg-slate-800 border-slate-700'}`}>
+                                                    <input type="radio" name={`correct_${q.id}`} checked={opt.correct} onChange={() => setCorrectOption(qIdx, oIdx)} className="w-5 h-5 cursor-pointer accent-green-500" title="סמן כתשובה נכונה" />
+                                                    <input type="text" className="flex-1 bg-transparent border-none outline-none font-bold text-white placeholder-slate-500" value={opt.text} placeholder={`תשובה ${oIdx+1}`} onChange={e => updateOptionText(qIdx, oIdx, e.target.value)} />
+                                                    {opt.correct && <span className="text-green-400 text-xs font-black bg-green-900/50 px-2 py-1 rounded">נכונה</span>}
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-bold text-blue-400 mb-2">משפט מסכם (מופיע לאחר חשיפת התוצאות):</label>
+                                            <input type="text" className="w-full p-4 bg-slate-800 border border-slate-600 rounded-xl text-white outline-none focus:border-blue-500" value={q.summary} onChange={e => updateQuestionData(qIdx, 'summary', e.target.value)} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                    </main>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
