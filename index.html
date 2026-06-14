@@ -14,7 +14,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <!-- Confetti Script -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
@@ -32,7 +31,7 @@
             transform-origin: 50% 50%;
         }
         
-        /* Custom Scrollbar for admin panel */
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
@@ -57,6 +56,7 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
+        
         const appId = 'nta-traffic-quiz-v1';
 
         const DEFAULT_QUESTIONS = [
@@ -269,8 +269,7 @@
             const [answers, setAnswers] = useState([]);
             const [dynamicQuestions, setDynamicQuestions] = useState(DEFAULT_QUESTIONS);
             
-            // ברירת המחדל תמיד תהיה לובי כדי למנוע היתקעות על מסך ריק
-            const [gameState, setGameState] = useState({ step: 'lobby', questionIndex: 0, startedAt: null }); 
+            const [gameState, setGameState] = useState({ step: 'login', questionIndex: 0, startedAt: null }); 
 
             const [selectedOption, setSelectedOption] = useState(null);
             const [timeLeft, setTimeLeft] = useState(30);
@@ -288,7 +287,6 @@
                     if (s.exists) {
                         setDynamicQuestions(s.data().list); 
                     } else {
-                        // אם המסד ריק לחלוטין (חדר חדש), שמור את השאלות החדשות בתוכו
                         path.collection('config').doc('questions').set({ list: DEFAULT_QUESTIONS });
                     }
                 });
@@ -297,7 +295,6 @@
                     if (s.exists) {
                         setGameState(s.data()); 
                     } else {
-                        // אם הסטטוס ריק, הגדר לובי אוטומטית כדי שהמנהל לא יתקע במסך שחור
                         const initialState = { step: 'lobby', questionIndex: 0, startedAt: null };
                         path.collection('config').doc('state').set(initialState);
                         setGameState(initialState);
@@ -481,15 +478,15 @@
                                 <Timer timeLeft={timeLeft} maxTime={30} />
                             </div>
 
-                            <div className="glass-panel p-6 rounded-[2rem] w-full mb-4 shadow-2xl border-t-4 border-t-blue-500">
-                                <h2 className="text-xl md:text-2xl font-black leading-snug text-center">{currentQ.question}</h2>
+                            <div className="glass-panel p-5 rounded-[2rem] w-full mb-4 shadow-2xl border-t-4 border-t-blue-500">
+                                <h2 className="text-lg md:text-xl font-black leading-snug text-center">{currentQ.question}</h2>
                             </div>
 
                             <div className="grid grid-cols-1 gap-3 w-full pb-8">
                                 {currentQ.options.map(opt => {
                                     const isSelected = selectedOption === opt.id;
                                     
-                                    let btnClasses = "p-4 rounded-2xl border-2 text-right font-bold transition-all text-base md:text-lg flex items-center justify-between ";
+                                    let btnClasses = "p-4 rounded-2xl border-2 text-right font-bold transition-all text-sm md:text-base leading-snug flex items-center justify-between ";
                                     if (isSelected) {
                                         btnClasses += "bg-blue-600 border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.5)] scale-[1.02] opacity-100";
                                     } else if (selectedOption !== null || isTimeUp) {
@@ -593,7 +590,7 @@
                 return (
                     <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 flex flex-col items-center overflow-y-auto pb-36">
                         
-                        <div className="w-full min-h-full max-w-6xl px-4 md:px-8 flex flex-col justify-center relative py-10">
+                        <div className="w-full min-h-full max-w-6xl px-4 md:px-8 flex flex-col justify-center relative py-6 mx-auto">
                             
                             {gameState.step === 'lobby' && (
                                 <div className="text-center animate-slide h-full flex flex-col items-center justify-center">
@@ -607,17 +604,17 @@
                             )}
 
                             {gameState.step === 'question' && currentQ && (
-                                <div className="flex flex-col h-full w-full animate-slide justify-center">
+                                <div className="flex flex-col w-full animate-slide justify-center flex-1 py-4">
                                     <div className="flex justify-between items-center mb-6 shrink-0">
-                                        <span className="text-blue-400 font-black text-2xl bg-blue-900/30 px-5 py-2 rounded-2xl border border-blue-500/30">שאלה {gameState.questionIndex + 1}</span>
+                                        <span className="text-blue-400 font-black text-xl md:text-2xl bg-blue-900/30 px-5 py-2 rounded-2xl border border-blue-500/30">שאלה {gameState.questionIndex + 1}</span>
                                         <Timer timeLeft={timeLeft} maxTime={30} />
-                                        <span className="text-slate-400 font-bold text-xl bg-slate-800/50 px-5 py-2 rounded-2xl border border-slate-600">ענו: <strong className="text-white">{currentAnswers.length} / {players.length}</strong></span>
+                                        <span className="text-slate-400 font-bold text-lg md:text-xl bg-slate-800/50 px-5 py-2 rounded-2xl border border-slate-600">ענו: <strong className="text-white">{currentAnswers.length} / {players.length}</strong></span>
                                     </div>
                                     <div className="flex-1 flex flex-col justify-center">
-                                        <h2 className="text-4xl md:text-5xl font-black mb-8 leading-tight text-center drop-shadow-xl shrink-0">{currentQ.question}</h2>
-                                        <div className="grid grid-cols-2 gap-4 md:gap-6 w-full shrink-0">
+                                        <h2 className="text-3xl md:text-4xl lg:text-5xl font-black mb-6 leading-tight text-center drop-shadow-xl shrink-0">{currentQ.question}</h2>
+                                        <div className="grid grid-cols-2 gap-3 md:gap-5 w-full shrink-0">
                                             {currentQ.options.map((opt, i) => (
-                                                <div key={opt.id} className="bg-slate-800/60 backdrop-blur-md p-6 rounded-3xl border-2 border-slate-600 text-2xl md:text-3xl font-bold text-center flex items-center justify-center min-h-[120px] shadow-2xl">
+                                                <div key={opt.id} className="bg-slate-800/60 backdrop-blur-md p-4 md:p-6 rounded-2xl md:rounded-3xl border-2 border-slate-600 text-lg md:text-xl lg:text-2xl leading-snug font-bold text-center flex items-center justify-center min-h-[90px] shadow-2xl">
                                                     {opt.text}
                                                 </div>
                                             ))}
@@ -627,38 +624,38 @@
                             )}
 
                             {gameState.step === 'results' && currentQ && (
-                                <div className="flex flex-col h-full animate-slide w-full justify-center">
-                                    <h2 className="text-3xl md:text-4xl font-black mb-6 text-center text-blue-300 uppercase tracking-widest shrink-0">תוצאות השאלה</h2>
-                                    <div className="space-y-4 flex-1 flex flex-col justify-center max-w-5xl mx-auto w-full">
+                                <div className="flex flex-col w-full animate-slide justify-center flex-1 py-4">
+                                    <h2 className="text-2xl md:text-3xl font-black mb-4 text-center text-blue-300 uppercase tracking-widest shrink-0">תוצאות השאלה</h2>
+                                    <div className="space-y-3 md:space-y-4 flex-1 flex flex-col justify-center max-w-5xl mx-auto w-full">
                                         {currentQ.options.map(opt => {
                                             const count = currentAnswers.filter(a => a.answerId === opt.id).length;
                                             const pct = currentAnswers.length ? Math.round((count / currentAnswers.length) * 100) : 0;
                                             return (
-                                                <div key={opt.id} className="flex items-center gap-4 w-full">
+                                                <div key={opt.id} className="flex items-center gap-3 w-full">
                                                     
-                                                    <div className="w-12 h-12 shrink-0 flex items-center justify-center">
+                                                    <div className="w-10 h-10 shrink-0 flex items-center justify-center">
                                                         {opt.correct && (
-                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="w-12 h-12 text-green-400 drop-shadow-[0_0_12px_rgba(74,222,128,0.9)]">
+                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="w-10 h-10 text-green-400 drop-shadow-[0_0_12px_rgba(74,222,128,0.9)]">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                                             </svg>
                                                         )}
                                                     </div>
                                                     
-                                                    <div className={`flex-1 relative overflow-hidden rounded-2xl border-2 md:border-4 p-4 md:p-5 flex justify-between items-center z-10 shadow-xl ${opt.correct ? 'border-green-500 bg-green-900/40' : 'border-slate-700 bg-slate-800/60'}`}>
+                                                    <div className={`flex-1 relative overflow-hidden rounded-xl md:rounded-2xl border-2 md:border-4 p-3 md:p-4 flex justify-between items-center z-10 shadow-xl ${opt.correct ? 'border-green-500 bg-green-900/40' : 'border-slate-700 bg-slate-800/60'}`}>
                                                         <div className="absolute top-0 right-0 h-full bg-gradient-to-l from-blue-600/40 to-indigo-600/40 -z-10 transition-all duration-1000" style={{ width: `${pct}%` }}></div>
-                                                        <span className={`font-black text-2xl md:text-3xl z-20 text-right ${opt.correct ? 'text-green-300 drop-shadow-md' : 'text-slate-200'}`}>
+                                                        <span className={`font-black text-lg md:text-xl lg:text-2xl leading-snug z-20 text-right pl-4 ${opt.correct ? 'text-green-300 drop-shadow-md' : 'text-slate-200'}`}>
                                                             {opt.text}
                                                         </span>
-                                                        <span className="font-black text-3xl md:text-4xl z-20 text-white drop-shadow-md">{count} <span className="text-xl md:text-2xl text-slate-300">({pct}%)</span></span>
+                                                        <span className="font-black text-2xl md:text-3xl z-20 text-white drop-shadow-md shrink-0">{count} <span className="text-lg md:text-xl text-slate-300">({pct}%)</span></span>
                                                     </div>
                                                 </div>
                                             );
                                         })}
                                     </div>
 
-                                    <div className="mt-10 shrink-0 bg-gradient-to-r from-blue-600/90 to-indigo-600/90 p-5 md:p-8 rounded-3xl border-2 border-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.6)] text-center transform hover:scale-[1.01] transition-transform duration-500 backdrop-blur-xl">
-                                        <p className="text-blue-100 font-bold text-sm md:text-base mb-2 uppercase tracking-widest drop-shadow">משפט מסכם:</p>
-                                        <p className="text-3xl md:text-4xl font-black text-white leading-tight drop-shadow-lg">{currentQ.summary}</p>
+                                    <div className="mt-6 shrink-0 bg-gradient-to-r from-blue-600/90 to-indigo-600/90 p-4 md:p-6 rounded-2xl md:rounded-3xl border-2 border-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.6)] text-center transform hover:scale-[1.01] transition-transform duration-500 backdrop-blur-xl">
+                                        <p className="text-blue-100 font-bold text-sm md:text-base mb-1 uppercase tracking-widest drop-shadow">משפט מסכם:</p>
+                                        <p className="text-xl md:text-2xl lg:text-3xl font-black text-white leading-tight drop-shadow-lg">{currentQ.summary}</p>
                                     </div>
                                 </div>
                             )}
