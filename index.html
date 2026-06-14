@@ -14,27 +14,37 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <!-- Confetti Script -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
-        body { font-family: 'Heebo', sans-serif; margin: 0; direction: rtl; background-color: #0f172a; }
-        .glass-panel { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2); }
-        .animate-slide { animation: slide-up 0.4s ease-out both; }
-        @keyframes slide-up { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .animate-pop { animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
-        @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        /* Custom Scrollbar for admin panel */
+        body { font-family: 'Heebo', sans-serif; margin: 0; direction: rtl; background-color: #0f172a; overflow-x: hidden; }
+        .glass-panel { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glass-panel-light { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); }
+        .animate-slide { animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+        @keyframes slide-up { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .animate-pop { animation: pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
+        @keyframes pop { 0% { transform: scale(0.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        
+        .timer-circle {
+            transition: stroke-dashoffset 1s linear;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-950 text-white min-h-screen">
+<body class="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white min-h-screen selection:bg-blue-500 selection:text-white">
     <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect, useMemo } = React;
 
-        // הוגדרו נתוני ה-Firebase החדשים
         const firebaseConfig = {
             apiKey: "AIzaSyCKM8oe0LNgk8FGZ2vj0rhEV9rCkKRkDGE",
             authDomain: "netaquiz.firebaseapp.com",
@@ -48,8 +58,6 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
-        
-        // מזהה פנימי חדש במסד הנתונים
         const appId = 'nta-quiz-dark-v1';
 
         const DEFAULT_QUESTIONS = [
@@ -74,46 +82,63 @@
                     { id: 'd', text: "בחדשות וברשתות החברתיות", correct: false }
                 ],
                 summary: "אתר המטה לביטחון לאומי (המל\"ל) הוא המקור הרשמי והמוסמך ביותר להנחיות ביטחון למטיילים בחו\"ל."
-            },
-            { 
-                id: 'q3', 
-                question: "מהי המטרה המרכזית של תדריך למשלחת?", 
-                options: [
-                    { id: 'a', text: "להפחיד את הנוסעים כדי שיזהרו יותר", correct: false },
-                    { id: 'b', text: "להעביר את אותה המצגת בדיוק לכל קבוצה", correct: false },
-                    { id: 'c', text: "להיות מותאם ספציפית לאופי המשלחת ולעודד קשב אקטיבי", correct: true },
-                    { id: 'd', text: "למלא חובה בירוקרטית של משרד החינוך", correct: false }
-                ],
-                summary: "אפקטיביות של תדריך נמדדת ביכולת שלו להיות רלוונטי לקבוצה וליצור אצלם קשב אקטיבי."
-            },
-            { 
-                id: 'q4', 
-                question: "האם הורים נחשבים מלווים רשמיים?", 
-                options: [
-                    { id: 'a', text: "כן, בכל מצב הורה נחשב מלווה מבוגר", correct: false },
-                    { id: 'b', text: "לא, למעט מקרים חריגים מאושרים מראש (כמו מסעות לפולין)", correct: true },
-                    { id: 'c', text: "כן, בתנאי שהם משלמים על עצמם", correct: false },
-                    { id: 'd', text: "רק אם הם אנשי כוחות הביטחון", correct: false }
-                ],
-                summary: "הנחיות משרד החינוך והביטחון ברורות מאוד לגבי הגדרת מלווים כדי להבטיח אחריותיות מקצועית."
             }
         ];
+
+        // --- ICONS ---
+        const IconCheck = () => (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-16 h-16 text-green-400 mx-auto mb-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+        );
+        const IconCross = () => (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-16 h-16 text-red-400 mx-auto mb-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        );
+        const IconMetro = () => (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-24 h-24 text-blue-400 inline-block mb-6">
+                <rect x="4" y="3" width="16" height="16" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round"></rect>
+                <path d="M4 11h16" strokeLinecap="round" strokeLinejoin="round"></path>
+                <path d="M12 3v8" strokeLinecap="round" strokeLinejoin="round"></path>
+                <path d="M8 19l-2 3" strokeLinecap="round" strokeLinejoin="round"></path>
+                <path d="M16 19l2 3" strokeLinecap="round" strokeLinejoin="round"></path>
+                <path d="M8 15h.01" strokeLinecap="round" strokeLinejoin="round"></path>
+                <path d="M16 15h.01" strokeLinecap="round" strokeLinejoin="round"></path>
+            </svg>
+        );
+
+        // --- TIMER COMPONENT ---
+        const Timer = ({ timeLeft, maxTime = 30 }) => {
+            const radius = 30;
+            const circumference = 2 * Math.PI * radius;
+            const strokeDashoffset = circumference - (timeLeft / maxTime) * circumference;
+            const isDanger = timeLeft <= 5;
+            
+            return (
+                <div className="relative w-20 h-20 flex items-center justify-center mx-auto mb-6">
+                    <svg className="w-full h-full absolute top-0 left-0 timer-circle" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r={radius} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="6" />
+                        <circle cx="40" cy="40" r={radius} fill="none" stroke={isDanger ? "#ef4444" : "#3b82f6"} strokeWidth="6" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" />
+                    </svg>
+                    <span className={`text-2xl font-black ${isDanger ? 'text-red-400 animate-ping' : 'text-blue-300'}`}>{timeLeft}</span>
+                </div>
+            );
+        };
 
         function App() {
             const [user, setUser] = useState(null);
             const [playerName, setPlayerName] = useState('');
             const [isAdmin, setIsAdmin] = useState(false);
-            const [adminPass, setAdminPass] = useState('');
-            const [adminTab, setAdminTab] = useState('game'); // 'game' or 'questions'
+            const [adminTab, setAdminTab] = useState('game'); 
             
-            // Shared DB State
             const [players, setPlayers] = useState([]);
             const [answers, setAnswers] = useState([]);
             const [dynamicQuestions, setDynamicQuestions] = useState(DEFAULT_QUESTIONS);
-            const [gameState, setGameState] = useState({ step: 'login', questionIndex: 0 }); 
+            const [gameState, setGameState] = useState({ step: 'login', questionIndex: 0, startedAt: null }); 
 
-            // Local Player State
             const [selectedOption, setSelectedOption] = useState(null);
+            const [timeLeft, setTimeLeft] = useState(30);
 
             useEffect(() => {
                 const unsubAuth = auth.onAuthStateChanged(u => { if (!u) auth.signInAnonymously(); setUser(u); });
@@ -136,9 +161,37 @@
                 return () => { unsubQ(); unsubState(); unsubP(); unsubA(); };
             }, [user]);
 
+            // Clear selection and handle Timer
             useEffect(() => {
                 setSelectedOption(null);
             }, [gameState.questionIndex, gameState.step]);
+
+            useEffect(() => {
+                let interval;
+                if (gameState.step === 'question' && gameState.startedAt) {
+                    interval = setInterval(() => {
+                        const elapsed = Math.floor((Date.now() - gameState.startedAt) / 1000);
+                        const remaining = Math.max(0, 30 - elapsed);
+                        setTimeLeft(remaining);
+                        
+                        // Auto-show results if time is up and this is Admin
+                        if (remaining === 0 && isAdmin) {
+                            clearInterval(interval);
+                            // Optional: updateGameState({ step: 'results' }); // Auto transition? Leaving manual for admin control.
+                        }
+                    }, 1000);
+                } else {
+                    setTimeLeft(30);
+                }
+                return () => clearInterval(interval);
+            }, [gameState.step, gameState.startedAt, isAdmin]);
+
+            // Confetti Trigger
+            useEffect(() => {
+                if (gameState.step === 'leaderboard') {
+                    confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 }, colors: ['#3b82f6', '#60a5fa', '#f59e0b', '#10b981'] });
+                }
+            }, [gameState.step]);
 
             const handleJoin = async () => {
                 if (!playerName.trim()) return;
@@ -146,15 +199,19 @@
             };
 
             const submitAnswer = async (optId) => {
-                if (selectedOption !== null || gameState.step !== 'question') return;
+                if (selectedOption !== null || gameState.step !== 'question' || timeLeft <= 0) return;
                 
                 setSelectedOption(optId);
                 const q = dynamicQuestions[gameState.questionIndex];
                 const isCorrect = q.options.find(o => o.id === optId)?.correct || false;
 
                 if (isCorrect) {
+                    // Score calculation: 50 base points + up to 50 speed points (total 100 max)
+                    const speedBonus = Math.floor((timeLeft / 30) * 50);
+                    const points = 50 + speedBonus;
+                    
                     const p = players.find(p => p.id === user.uid);
-                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(user.uid).update({ score: (p?.score || 0) + 100 });
+                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(user.uid).update({ score: (p?.score || 0) + points });
                 }
 
                 await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('answers').add({
@@ -164,11 +221,12 @@
 
             // --- ADMIN FUNCTIONS ---
             const updateGameState = async (newState) => {
+                if (newState.step === 'question') newState.startedAt = Date.now();
                 await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('config').doc('state').set({...gameState, ...newState}, { merge: true });
             };
 
             const resetGame = async () => {
-                if (!confirm("למחוק את כל נתוני המשחק ולהתחיל מחדש?")) return;
+                if (!confirm("האם אתה בטוח שברצונך לאפס את המשחק ולמחוק את כל הניקוד?")) return;
                 const path = db.collection('artifacts').doc(appId).collection('public').doc('data');
                 const pS = await path.collection('players').get();
                 const aS = await path.collection('answers').get();
@@ -177,7 +235,7 @@
                 aS.forEach(d => batch.delete(d.ref));
                 await batch.commit();
                 await updateGameState({ step: 'lobby', questionIndex: 0 });
-                alert("המשחק אופס והועבר ללובי.");
+                alert("המשחק אופס בהצלחה.");
             };
 
             const saveQuestions = async (newQuestions) => {
@@ -189,10 +247,8 @@
                     id: 'q_' + Date.now(),
                     question: "שאלה חדשה...",
                     options: [
-                        { id: 'a', text: "תשובה 1", correct: true },
-                        { id: 'b', text: "תשובה 2", correct: false },
-                        { id: 'c', text: "תשובה 3", correct: false },
-                        { id: 'd', text: "תשובה 4", correct: false }
+                        { id: 'a', text: "תשובה 1", correct: true }, { id: 'b', text: "תשובה 2", correct: false },
+                        { id: 'c', text: "תשובה 3", correct: false }, { id: 'd', text: "תשובה 4", correct: false }
                     ],
                     summary: "משפט מסכם לשאלה."
                 };
@@ -223,7 +279,6 @@
                 saveQuestions(n);
             };
 
-            // --- COMPUTED VALUES ---
             const leaderboard = useMemo(() => [...players].sort((a,b) => (b.score||0)-(a.score||0)).slice(0, 5), [players]);
             const currentPlayer = players.find(p => p.id === user?.uid);
             const currentQ = dynamicQuestions[gameState.questionIndex];
@@ -233,51 +288,51 @@
             // PLAYER VIEWS
             // ==========================================
             if (!isAdmin) {
-                // Not logged in yet
                 if (!currentPlayer) {
                     return (
                         <div className="flex flex-col items-center justify-center min-h-screen p-4 w-full max-w-md mx-auto animate-slide">
-                            <div className="text-center mb-8">
-                                <div className="text-6xl mb-4">✈️</div>
-                                <h1 className="text-3xl font-black text-blue-300">תדריך משלחת</h1>
+                            <div className="text-center mb-10">
+                                <IconMetro />
+                                <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-l from-blue-400 to-indigo-400 drop-shadow-lg">ברוכים הבאים לחידון</h1>
                             </div>
-                            <div className="glass-panel p-8 rounded-3xl w-full text-center shadow-2xl">
-                                <h2 className="text-xl font-bold mb-6 text-white">הכנס שם להצטרפות למשחק</h2>
-                                <input type="text" className="w-full p-4 rounded-xl bg-slate-800/50 border border-blue-400/30 mb-6 text-center text-xl font-bold text-white outline-none focus:border-blue-400 focus:bg-slate-800" placeholder="איך קוראים לך?" value={playerName} onChange={e => setPlayerName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleJoin()} />
-                                <button onClick={handleJoin} className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-xl transition-all shadow-lg shadow-blue-900/50">הצטרפות</button>
+                            <div className="glass-panel-light p-8 rounded-[2rem] w-full text-center shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+                                <h2 className="text-xl font-bold mb-6 text-blue-200">הכנס שם להצטרפות למשחק</h2>
+                                <input type="text" className="w-full p-4 rounded-xl bg-slate-900/60 border border-blue-500/30 mb-6 text-center text-2xl font-black text-white outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50 transition-all" placeholder="איך קוראים לך?" value={playerName} onChange={e => setPlayerName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleJoin()} />
+                                <button onClick={handleJoin} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white py-4 rounded-xl font-black text-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] hover:-translate-y-1">הצטרפות</button>
                             </div>
-                            <button onClick={() => { const p = prompt("סיסמת מנהל:"); if(p === '12345') setIsAdmin(true); }} className="mt-12 text-slate-500 hover:text-slate-300 text-sm font-bold transition-all">כניסת מנהל ⚙️</button>
+                            <button onClick={() => { const p = prompt("סיסמת מנהל:"); if(p === '12345') setIsAdmin(true); }} className="mt-16 text-slate-500 hover:text-blue-400 text-sm font-bold transition-all">⚙️ כניסת מנהל</button>
                         </div>
                     );
                 }
 
-                // Logged in, waiting for Admin
                 if (gameState.step === 'login' || gameState.step === 'lobby') {
                     return (
                         <div className="flex flex-col items-center justify-center min-h-screen p-4 animate-slide text-center">
-                            <div className="glass-panel p-10 rounded-3xl shadow-2xl max-w-md w-full">
-                                <h2 className="text-3xl font-black mb-4 text-blue-300">היי {currentPlayer.name}! 👋</h2>
-                                <p className="text-xl text-slate-300 mb-8">המשחק יתחיל ברגע שהמנהל יאשר...</p>
-                                <div className="animate-pulse flex justify-center space-x-2 space-x-reverse">
-                                    <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
-                                    <div className="w-4 h-4 bg-blue-400 rounded-full animation-delay-200"></div>
-                                    <div className="w-4 h-4 bg-blue-300 rounded-full animation-delay-400"></div>
+                            <div className="glass-panel-light p-10 rounded-[3rem] shadow-2xl max-w-md w-full border-t-4 border-t-blue-500">
+                                <h2 className="text-4xl font-black mb-4 text-transparent bg-clip-text bg-gradient-to-br from-white to-blue-200">היי {currentPlayer.name}! 👋</h2>
+                                <p className="text-2xl font-bold text-blue-300 mb-8 drop-shadow-md">עוד כמה רגעים מתחילים...</p>
+                                <div className="flex justify-center space-x-3 space-x-reverse">
+                                    <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                                    <div className="w-4 h-4 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></div>
+                                    <div className="w-4 h-4 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></div>
                                 </div>
                             </div>
                         </div>
                     );
                 }
 
-                // Answering a question
                 if (gameState.step === 'question' && currentQ) {
+                    const isTimeUp = timeLeft <= 0;
                     return (
-                        <div className="flex flex-col items-center min-h-screen p-4 w-full max-w-2xl mx-auto pt-12 animate-slide">
-                            <div className="w-full flex justify-between items-center mb-6">
-                                <span className="bg-slate-800/50 px-4 py-1 rounded-full text-sm font-bold text-blue-300 border border-blue-500/30">שאלה {gameState.questionIndex + 1} / {dynamicQuestions.length}</span>
-                                <span className="font-bold">{currentPlayer.name} ⭐ {currentPlayer.score}</span>
+                        <div className="flex flex-col items-center min-h-screen p-4 w-full max-w-2xl mx-auto pt-8 animate-slide">
+                            <div className="w-full flex justify-between items-center mb-2">
+                                <span className="bg-slate-800/80 px-4 py-1 rounded-full text-sm font-bold text-blue-300 border border-slate-700">שאלה {gameState.questionIndex + 1} / {dynamicQuestions.length}</span>
+                                <span className="font-black text-lg bg-blue-900/50 px-4 py-1 rounded-full text-blue-200 border border-blue-700/50">⭐ {currentPlayer.score} נק'</span>
                             </div>
                             
-                            <div className="glass-panel p-8 rounded-[2rem] w-full mb-8 shadow-2xl border-t-4 border-t-blue-500">
+                            <Timer timeLeft={timeLeft} />
+
+                            <div className="glass-panel p-8 rounded-[2rem] w-full mb-6 shadow-2xl border-t-4 border-t-blue-500">
                                 <h2 className="text-2xl font-black leading-snug text-center">{currentQ.question}</h2>
                             </div>
 
@@ -288,29 +343,34 @@
                                         <button 
                                             key={opt.id} 
                                             onClick={() => submitAnswer(opt.id)}
-                                            disabled={selectedOption !== null}
-                                            className={`p-5 rounded-2xl border-2 text-right font-bold transition-all text-lg
-                                                ${selectedOption === null ? 'bg-slate-800/60 border-slate-600 hover:border-blue-400 hover:bg-slate-700' : ''}
-                                                ${isSelected ? 'bg-blue-600 border-blue-400 shadow-lg shadow-blue-900/50 scale-[1.02]' : ''}
-                                                ${selectedOption !== null && !isSelected ? 'opacity-50 bg-slate-800/40 border-slate-700' : ''}
+                                            disabled={selectedOption !== null || isTimeUp}
+                                            className={`p-6 rounded-2xl border-2 text-right font-bold transition-all text-lg flex items-center justify-between
+                                                ${selectedOption === null && !isTimeUp ? 'bg-slate-800/60 border-slate-600 hover:border-blue-400 hover:bg-slate-700' : ''}
+                                                ${isSelected ? 'bg-blue-600 border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.5)] scale-[1.02]' : ''}
+                                                ${(selectedOption !== null && !isSelected) || isTimeUp ? 'opacity-40 bg-slate-800/40 border-slate-800 cursor-not-allowed' : ''}
                                             `}
                                         >
-                                            {opt.text}
+                                            <span>{opt.text}</span>
+                                            {isSelected && <span className="w-4 h-4 bg-white rounded-full ml-2 shadow-[0_0_10px_white]"></span>}
                                         </button>
                                     );
                                 })}
                             </div>
                             
                             {selectedOption !== null && (
-                                <div className="mt-8 text-blue-300 font-bold animate-pulse text-center">
+                                <div className="mt-8 text-blue-300 font-bold animate-pulse text-center bg-blue-900/30 px-6 py-2 rounded-full border border-blue-500/20">
                                     התשובה נקלטה! ממתינים לכולם...
+                                </div>
+                            )}
+                            {isTimeUp && selectedOption === null && (
+                                <div className="mt-8 text-red-400 font-bold text-center bg-red-900/30 px-6 py-2 rounded-full border border-red-500/20">
+                                    הזמן עבר! המתן לתשובה...
                                 </div>
                             )}
                         </div>
                     );
                 }
 
-                // Results view for player
                 if (gameState.step === 'results' && currentQ) {
                     const myAnswerDoc = answers.find(a => a.playerId === user.uid && a.questionId === currentQ.id);
                     const isCorrect = myAnswerDoc?.isCorrect;
@@ -318,35 +378,39 @@
 
                     return (
                         <div className="flex flex-col items-center justify-center min-h-screen p-4 animate-pop text-center">
-                            <div className={`glass-panel p-12 rounded-[3rem] shadow-2xl border-t-8 w-full max-w-md ${isCorrect ? 'border-t-green-500 bg-green-900/20' : 'border-t-red-500 bg-red-900/20'}`}>
-                                <div className="text-8xl mb-6">{isCorrect ? "✅" : "❌"}</div>
-                                <h2 className={`text-4xl font-black mb-4 ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>
-                                    {isCorrect ? "צדקת!" : "טעות..."}
+                            <div className={`glass-panel p-12 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-md border-2 relative overflow-hidden ${isCorrect ? 'border-green-500 bg-gradient-to-b from-green-900/40 to-slate-900/80' : 'border-red-500 bg-gradient-to-b from-red-900/40 to-slate-900/80'}`}>
+                                
+                                {isCorrect ? <IconCheck /> : <IconCross />}
+                                
+                                <h2 className={`text-5xl font-black mb-4 drop-shadow-lg ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>
+                                    {isCorrect ? "נכון מאוד!" : "טעות..."}
                                 </h2>
+                                
                                 {!isCorrect && correctOpt && (
-                                    <div className="mt-6 bg-slate-900/50 p-4 rounded-xl border border-slate-700 text-right">
-                                        <p className="text-sm text-slate-400 mb-1">התשובה הנכונה הייתה:</p>
-                                        <p className="font-bold text-white">{correctOpt.text}</p>
+                                    <div className="mt-8 bg-slate-900/80 p-5 rounded-2xl border border-slate-700 text-right shadow-inner">
+                                        <p className="text-sm text-red-300 font-bold mb-2 uppercase tracking-wide">התשובה הנכונה:</p>
+                                        <p className="font-bold text-white text-lg">{correctOpt.text}</p>
                                     </div>
                                 )}
-                                <div className="mt-8 pt-6 border-t border-white/10 text-xl font-bold text-blue-200">
-                                    ניקוד נוכחי: {currentPlayer.score} נק'
+                                
+                                <div className="mt-10 pt-6 border-t border-white/10">
+                                    <p className="text-sm text-slate-400 mb-1 font-bold uppercase tracking-wider">סך הכל ניקוד</p>
+                                    <p className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">{currentPlayer.score}</p>
                                 </div>
                             </div>
                         </div>
                     );
                 }
 
-                // Leaderboard / waiting for next question
                 if (gameState.step === 'leaderboard') {
                     const myRank = [...players].sort((a,b) => (b.score||0)-(a.score||0)).findIndex(p => p.id === user.uid) + 1;
                     return (
                         <div className="flex flex-col items-center justify-center min-h-screen p-4 animate-slide text-center">
-                            <div className="glass-panel p-10 rounded-[3rem] shadow-2xl max-w-md w-full border-t-4 border-t-yellow-500">
-                                <div className="text-6xl mb-6">🏆</div>
-                                <h2 className="text-2xl font-black mb-2 text-white">הבט במסך המרכזי לטבלת המובילים!</h2>
-                                <p className="text-lg text-slate-300 mb-6">המיקום שלך כרגע: <strong className="text-yellow-400 text-2xl">{myRank}</strong></p>
-                                <div className="text-sm text-blue-300 bg-blue-900/40 p-3 rounded-lg border border-blue-500/30">
+                            <div className="glass-panel p-10 rounded-[3rem] shadow-[0_0_50px_rgba(234,179,8,0.2)] max-w-md w-full border-2 border-yellow-500/50 bg-gradient-to-b from-yellow-900/20 to-slate-900">
+                                <div className="text-7xl mb-6 drop-shadow-2xl">🏆</div>
+                                <h2 className="text-3xl font-black mb-4 text-white">הבט במסך המרכזי!</h2>
+                                <p className="text-xl text-slate-300 mb-8">המיקום שלך כרגע: <strong className="text-yellow-400 text-4xl block mt-2 drop-shadow-md">#{myRank}</strong></p>
+                                <div className="text-md text-blue-200 font-bold bg-blue-900/40 p-4 rounded-xl border border-blue-500/30 animate-pulse">
                                     הכן את עצמך לשאלה הבאה...
                                 </div>
                             </div>
@@ -358,208 +422,172 @@
             }
 
             // ==========================================
-            // ADMIN VIEW
+            // ADMIN VIEW (FULLSCREEN PRESENTATION)
             // ==========================================
+            if (adminTab === 'game') {
+                return (
+                    <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 flex flex-col items-center justify-center overflow-hidden">
+                        
+                        {/* MAIN FULLSCREEN DISPLAY */}
+                        <div className="w-full max-w-6xl px-8 flex-1 flex flex-col justify-center relative">
+                            
+                            {gameState.step === 'lobby' && (
+                                <div className="text-center animate-slide">
+                                    <IconMetro />
+                                    <h1 className="text-7xl font-black mb-8 text-transparent bg-clip-text bg-gradient-to-b from-white to-blue-300 drop-shadow-2xl">ברוכים הבאים לחידון!</h1>
+                                    <div className="text-3xl font-bold text-blue-300 mb-16 bg-blue-900/30 inline-block px-10 py-4 rounded-full border border-blue-500/30 shadow-lg">ממתינים לשחקנים... ({players.length})</div>
+                                    <div className="flex flex-wrap gap-4 justify-center max-w-4xl mx-auto">
+                                        {players.map(p => <span key={p.id} className="bg-slate-800/80 backdrop-blur px-6 py-3 rounded-full font-black text-xl border-2 border-slate-600 shadow-xl">{p.name}</span>)}
+                                    </div>
+                                </div>
+                            )}
+
+                            {gameState.step === 'question' && currentQ && (
+                                <div className="flex flex-col w-full animate-slide">
+                                    <div className="flex justify-between items-center mb-10">
+                                        <span className="text-blue-400 font-black text-3xl bg-blue-900/30 px-6 py-2 rounded-2xl border border-blue-500/30">שאלה {gameState.questionIndex + 1}</span>
+                                        <Timer timeLeft={timeLeft} maxTime={30} />
+                                        <span className="text-slate-400 font-bold text-2xl">ענו: <strong className="text-white">{currentAnswers.length} / {players.length}</strong></span>
+                                    </div>
+                                    <h2 className="text-6xl font-black mb-16 leading-tight text-center drop-shadow-xl">{currentQ.question}</h2>
+                                    <div className="grid grid-cols-2 gap-8 w-full">
+                                        {currentQ.options.map((opt, i) => (
+                                            <div key={opt.id} className="bg-slate-800/60 backdrop-blur-md p-8 rounded-3xl border-2 border-slate-600 text-3xl font-bold text-center flex items-center justify-center min-h-[160px] shadow-2xl">
+                                                {opt.text}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {gameState.step === 'results' && currentQ && (
+                                <div className="flex flex-col h-full py-12 animate-slide w-full">
+                                    <h2 className="text-4xl font-black mb-12 text-center text-blue-300 uppercase tracking-widest">תוצאות השאלה</h2>
+                                    <div className="space-y-6 mb-12 flex-1">
+                                        {currentQ.options.map(opt => {
+                                            const count = currentAnswers.filter(a => a.answerId === opt.id).length;
+                                            const pct = currentAnswers.length ? Math.round((count / currentAnswers.length) * 100) : 0;
+                                            return (
+                                                <div key={opt.id} className={`relative overflow-hidden rounded-2xl border-4 p-6 flex justify-between items-center z-10 shadow-xl ${opt.correct ? 'border-green-500 bg-green-900/40' : 'border-slate-700 bg-slate-800/60'}`}>
+                                                    <div className="absolute top-0 right-0 h-full bg-gradient-to-l from-blue-600/40 to-indigo-600/40 -z-10 transition-all duration-1000" style={{ width: `${pct}%` }}></div>
+                                                    <span className={`font-black text-3xl z-20 w-3/4 text-right ${opt.correct ? 'text-green-300 drop-shadow-md' : 'text-slate-200'}`}>
+                                                        {opt.text} {opt.correct && "✅"}
+                                                    </span>
+                                                    <span className="font-black text-4xl z-20 text-white drop-shadow-md">{count} <span className="text-2xl text-slate-300">({pct}%)</span></span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* HIGHLIGHTED SUMMARY SENTENCE */}
+                                    <div className="mt-auto bg-gradient-to-r from-blue-600/90 to-indigo-600/90 p-8 rounded-[2.5rem] border-2 border-blue-400 shadow-[0_0_40px_rgba(59,130,246,0.6)] text-center transform hover:scale-[1.02] transition-transform duration-500 backdrop-blur-xl">
+                                        <p className="text-blue-100 font-bold text-lg mb-3 uppercase tracking-widest drop-shadow">משפט מסכם:</p>
+                                        <p className="text-4xl font-black text-white leading-tight drop-shadow-lg">{currentQ.summary}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {gameState.step === 'leaderboard' && (
+                                <div className="flex flex-col items-center justify-center h-full animate-slide w-full">
+                                    <h2 className="text-6xl font-black mb-16 text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 to-yellow-500 drop-shadow-[0_5px_15px_rgba(234,179,8,0.4)]">🏆 המובילים 🏆</h2>
+                                    <div className="w-full max-w-2xl space-y-6">
+                                        {leaderboard.map((p, i) => (
+                                            <div key={p.id} className={`flex justify-between items-center p-6 rounded-3xl font-black text-3xl shadow-2xl ${i === 0 ? 'bg-gradient-to-r from-yellow-600/40 to-yellow-500/20 border-2 border-yellow-400 text-yellow-300 scale-110 shadow-[0_0_30px_rgba(234,179,8,0.5)] mb-10' : 'bg-slate-800/80 border border-slate-600 text-white'}`}>
+                                                <span>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)+'.'} {p.name}</span>
+                                                <span className="font-bold">{p.score} <span className="text-xl opacity-70">נק'</span></span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* FLOATING ADMIN CONTROLS (BOTTOM CENTER) */}
+                        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 glass-panel px-8 py-4 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.5)] flex items-center gap-6 z-50 border-t border-white/20">
+                            <span className="text-slate-400 font-bold text-sm tracking-widest uppercase flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                                בקרת מנהל
+                            </span>
+                            <div className="h-8 w-px bg-slate-700"></div>
+
+                            {gameState.step === 'lobby' && (
+                                <button onClick={() => updateGameState({ step: 'question', questionIndex: 0 })} className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white px-8 py-3 rounded-full font-black text-lg shadow-lg hover:shadow-green-500/50 transition-all hover:-translate-y-1">🚀 התחל משחק</button>
+                            )}
+                            
+                            {gameState.step === 'question' && (
+                                <button onClick={() => updateGameState({ step: 'results' })} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-8 py-3 rounded-full font-black text-lg shadow-lg hover:shadow-blue-500/50 transition-all hover:-translate-y-1">📊 חשוף תוצאות</button>
+                            )}
+
+                            {gameState.step === 'results' && (
+                                <button onClick={() => updateGameState({ step: 'leaderboard' })} className="bg-gradient-to-r from-yellow-600 to-orange-500 hover:from-yellow-500 hover:to-orange-400 text-white px-8 py-3 rounded-full font-black text-lg shadow-lg hover:shadow-yellow-500/50 transition-all hover:-translate-y-1">🏆 טבלת מובילים</button>
+                            )}
+
+                            {gameState.step === 'leaderboard' && (
+                                gameState.questionIndex < dynamicQuestions.length - 1 ? (
+                                    <button onClick={() => updateGameState({ step: 'question', questionIndex: gameState.questionIndex + 1 })} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-8 py-3 rounded-full font-black text-lg shadow-lg transition-all hover:-translate-y-1">➔ לשאלה הבאה</button>
+                                ) : (
+                                    <span className="text-green-400 font-black px-4">סיום המשחק! 🎉</span>
+                                )
+                            )}
+                            
+                            <div className="h-8 w-px bg-slate-700"></div>
+                            <button onClick={() => setAdminTab('questions')} className="text-slate-300 hover:text-white font-bold bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-full transition-all">⚙️ עריכת שאלות</button>
+                        </div>
+                    </div>
+                );
+            }
+
+            // --- ADMIN: QUESTIONS EDITOR ---
             return (
                 <div className="min-h-screen flex flex-col items-center p-4 w-full">
-                    <nav className="w-full max-w-5xl flex flex-wrap justify-between items-center glass-panel p-4 rounded-2xl shadow-lg mb-6 sticky top-4 z-50">
-                        <div className="font-black text-2xl text-blue-300 flex items-center gap-2">
-                            <span>⚙️ פאנל ניהול</span>
-                            <span className="text-sm bg-blue-900 text-blue-200 px-3 py-1 rounded-full border border-blue-700 font-normal">
-                                {players.length} משתתפים
+                    <nav className="w-full max-w-5xl flex flex-wrap justify-between items-center glass-panel-light p-5 rounded-2xl shadow-lg mb-8 sticky top-4 z-50">
+                        <div className="font-black text-2xl text-blue-300 flex items-center gap-3">
+                            ⚙️ פאנל ניהול
+                            <span className="text-sm bg-blue-900/50 text-blue-200 px-3 py-1 rounded-full border border-blue-700 font-normal shadow-inner">
+                                מצב עריכה
                             </span>
                         </div>
-                        <div className="flex gap-2 mt-4 sm:mt-0">
-                            <button onClick={() => setAdminTab('game')} className={`px-5 py-2 rounded-xl font-bold transition-all ${adminTab === 'game' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}>ניהול משחק</button>
-                            <button onClick={() => setAdminTab('questions')} className={`px-5 py-2 rounded-xl font-bold transition-all ${adminTab === 'questions' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}>עריכת שאלות</button>
-                            <button onClick={() => setIsAdmin(false)} className="px-5 py-2 rounded-xl font-bold bg-red-900/50 text-red-300 hover:bg-red-800 border border-red-800 mr-4">יציאה</button>
+                        <div className="flex gap-3">
+                            <button onClick={() => setAdminTab('game')} className="px-6 py-2.5 rounded-xl font-bold transition-all bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg hover:shadow-blue-500/50 hover:-translate-y-0.5">חזור למסך המשחק ➔</button>
+                            <button onClick={() => setIsAdmin(false)} className="px-5 py-2.5 rounded-xl font-bold bg-red-900/40 text-red-300 hover:bg-red-800/80 border border-red-800 transition-all">יציאה</button>
                         </div>
                     </nav>
 
-                    <main className="w-full max-w-5xl pb-20">
+                    <main className="w-full max-w-5xl pb-20 animate-slide">
+                        <div className="flex justify-between items-center mb-8 bg-slate-800/50 p-6 rounded-3xl border border-slate-700 shadow-xl">
+                            <div className="flex gap-4">
+                                <button onClick={addQuestion} className="bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-xl font-black shadow-[0_4px_15px_rgba(22,163,74,0.4)] transition-all">➕ הוסף שאלה חדשה</button>
+                                <button onClick={resetGame} className="bg-red-900/80 hover:bg-red-700 text-red-100 px-6 py-3 rounded-xl font-bold shadow-lg border border-red-600 transition-all">🗑️ איפוס נתוני המשחק</button>
+                            </div>
+                            <h2 className="text-2xl font-black text-slate-300">סך הכל שאלות: {dynamicQuestions.length}</h2>
+                        </div>
                         
-                        {/* --- ADMIN: GAME CONTROLLER --- */}
-                        {adminTab === 'game' && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                
-                                {/* Right Sidebar: Controls */}
-                                <div className="md:col-span-1 space-y-4">
-                                    <div className="glass-panel p-6 rounded-2xl shadow-xl">
-                                        <h3 className="font-black text-xl mb-4 border-b border-white/10 pb-2 text-blue-300">בקרת משחק</h3>
-                                        
-                                        <div className="space-y-3">
-                                            <div className="text-sm text-slate-400 mb-1">סטטוס נוכחי: <strong className="text-white bg-slate-800 px-2 py-1 rounded">{
-                                                gameState.step === 'lobby' ? 'המתנה בלובי' :
-                                                gameState.step === 'question' ? 'שאלה באוויר' :
-                                                gameState.step === 'results' ? 'מסך תוצאות' :
-                                                gameState.step === 'leaderboard' ? 'טבלת מובילים' : gameState.step
-                                            }</strong></div>
-                                            
-                                            <button onClick={() => updateGameState({ step: 'lobby', questionIndex: 0 })} className="w-full bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-bold border border-slate-600">
-                                                🏠 חזור ללובי מתנה
-                                            </button>
-                                            
-                                            {gameState.step === 'lobby' && (
-                                                <button onClick={() => updateGameState({ step: 'question', questionIndex: 0 })} className="w-full bg-green-600 hover:bg-green-500 text-white py-4 rounded-xl font-black text-lg shadow-lg shadow-green-900/50">
-                                                    🚀 התחל משחק (שאלה 1)
-                                                </button>
-                                            )}
+                        <div className="space-y-8">
+                            {dynamicQuestions.map((q, qIdx) => (
+                                <div key={q.id} className="glass-panel p-8 rounded-[2.5rem] shadow-2xl relative border-t-4 border-t-slate-600 transition-all hover:border-t-blue-500">
+                                    <button onClick={() => deleteQuestion(q.id)} className="absolute top-6 left-6 text-red-400 hover:text-white bg-red-900/30 hover:bg-red-600 px-4 py-2 rounded-xl font-bold transition-all border border-red-800">מחק שאלה 🗑️</button>
+                                    
+                                    <div className="mb-6 pr-4">
+                                        <label className="block text-sm font-black text-blue-400 mb-2 uppercase tracking-widest">שאלה {qIdx + 1}</label>
+                                        <input type="text" className="w-full p-5 bg-slate-900/80 border-2 border-slate-700 rounded-2xl font-black text-2xl text-white outline-none focus:border-blue-500 transition-colors shadow-inner" value={q.question} onChange={e => updateQuestionData(qIdx, 'question', e.target.value)} />
+                                    </div>
 
-                                            {gameState.step === 'question' && (
-                                                <button onClick={() => updateGameState({ step: 'results' })} className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-lg shadow-lg shadow-blue-900/50">
-                                                    📊 עצור והצג תוצאות
-                                                </button>
-                                            )}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 bg-slate-900/40 p-6 rounded-3xl border border-slate-700/50 mb-6">
+                                        {q.options.map((opt, oIdx) => (
+                                            <div key={opt.id} className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ${opt.correct ? 'bg-green-900/20 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)]' : 'bg-slate-800 border-slate-700 hover:border-slate-500'}`}>
+                                                <input type="radio" name={`correct_${q.id}`} checked={opt.correct} onChange={() => setCorrectOption(qIdx, oIdx)} className="w-6 h-6 cursor-pointer accent-green-500" />
+                                                <input type="text" className="flex-1 bg-transparent border-none outline-none font-bold text-lg text-white placeholder-slate-500" value={opt.text} placeholder={`תשובה ${oIdx+1}`} onChange={e => updateOptionText(qIdx, oIdx, e.target.value)} />
+                                            </div>
+                                        ))}
+                                    </div>
 
-                                            {gameState.step === 'results' && (
-                                                <button onClick={() => updateGameState({ step: 'leaderboard' })} className="w-full bg-yellow-600 hover:bg-yellow-500 text-white py-4 rounded-xl font-black text-lg shadow-lg shadow-yellow-900/50">
-                                                    🏆 הצג טבלת מובילים
-                                                </button>
-                                            )}
-
-                                            {gameState.step === 'leaderboard' && (
-                                                <div className="pt-4 space-y-3 border-t border-white/10">
-                                                    {gameState.questionIndex < dynamicQuestions.length - 1 ? (
-                                                        <button onClick={() => updateGameState({ step: 'question', questionIndex: gameState.questionIndex + 1 })} className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black text-lg shadow-lg shadow-blue-900/50">
-                                                            ➔ המשך לשאלה {gameState.questionIndex + 2}
-                                                        </button>
-                                                    ) : (
-                                                        <div className="bg-green-900/50 text-green-300 p-4 rounded-xl text-center font-bold border border-green-700">
-                                                            הגענו לסוף השאלות! 🎉
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="mt-8 pt-6 border-t border-white/10">
-                                            <button onClick={resetGame} className="w-full bg-red-900/50 hover:bg-red-800 text-red-200 py-2 rounded-xl font-bold border border-red-800 text-sm">
-                                                🗑️ איפוס מוחלט של המשחק
-                                            </button>
-                                        </div>
+                                    <div>
+                                        <label className="block text-sm font-black text-indigo-400 mb-2 uppercase tracking-widest">משפט מסכם (מופיע לאחר התוצאות)</label>
+                                        <input type="text" className="w-full p-5 bg-indigo-950/30 border border-indigo-900/50 rounded-2xl text-white font-bold text-lg outline-none focus:border-indigo-400 transition-colors" value={q.summary} onChange={e => updateQuestionData(qIdx, 'summary', e.target.value)} />
                                     </div>
                                 </div>
-
-                                {/* Main Screen Preview */}
-                                <div className="md:col-span-2">
-                                    <div className="glass-panel p-8 rounded-3xl shadow-2xl min-h-[500px] flex flex-col relative border-4 border-slate-800 bg-slate-900/80">
-                                        <div className="absolute top-4 left-4 bg-slate-800 px-3 py-1 rounded text-xs font-bold text-slate-400">תצוגת מסך מרכזי</div>
-                                        
-                                        {/* Lobby View */}
-                                        {gameState.step === 'lobby' && (
-                                            <div className="flex-1 flex flex-col items-center justify-center text-center animate-slide">
-                                                <h1 className="text-5xl font-black mb-8 text-blue-400">הצטרפו למשחק!</h1>
-                                                <div className="text-2xl text-slate-300 mb-12">ממתינים לשחקנים... ({players.length})</div>
-                                                <div className="flex flex-wrap gap-3 justify-center max-w-2xl">
-                                                    {players.map(p => <span key={p.id} className="bg-slate-800 px-4 py-2 rounded-full font-bold border border-slate-600">{p.name}</span>)}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Question View */}
-                                        {gameState.step === 'question' && currentQ && (
-                                            <div className="flex-1 flex flex-col animate-slide">
-                                                <div className="text-center mb-8">
-                                                    <span className="text-blue-400 font-bold text-xl">שאלה {gameState.questionIndex + 1}</span>
-                                                    <h2 className="text-4xl font-black mt-4 leading-snug">{currentQ.question}</h2>
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-4 mt-auto mb-10">
-                                                    {currentQ.options.map((opt, i) => (
-                                                        <div key={opt.id} className="bg-slate-800/80 p-6 rounded-2xl border-2 border-slate-700 text-2xl font-bold text-center flex items-center justify-center min-h-[120px]">
-                                                            {opt.text}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                                <div className="text-center bg-blue-900/40 py-3 rounded-xl border border-blue-500/30 font-bold text-blue-200">
-                                                    ענו עד כה: {currentAnswers.length} / {players.length}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Results View */}
-                                        {gameState.step === 'results' && currentQ && (
-                                            <div className="flex-1 flex flex-col animate-slide">
-                                                <h2 className="text-3xl font-black mb-8 text-center text-blue-300">תוצאות השאלה</h2>
-                                                
-                                                <div className="space-y-4 mb-8">
-                                                    {currentQ.options.map(opt => {
-                                                        const count = currentAnswers.filter(a => a.answerId === opt.id).length;
-                                                        const pct = currentAnswers.length ? Math.round((count / currentAnswers.length) * 100) : 0;
-                                                        return (
-                                                            <div key={opt.id} className={`relative overflow-hidden rounded-xl border-2 p-4 flex justify-between items-center z-10 ${opt.correct ? 'border-green-500 bg-green-900/30' : 'border-slate-700 bg-slate-800/50'}`}>
-                                                                <div className="absolute top-0 right-0 h-full bg-blue-600/30 -z-10 transition-all duration-1000" style={{ width: `${pct}%` }}></div>
-                                                                <span className={`font-bold text-xl z-20 ${opt.correct ? 'text-green-300' : 'text-slate-200'}`}>
-                                                                    {opt.text} {opt.correct && "✅"}
-                                                                </span>
-                                                                <span className="font-black text-2xl z-20">{count} ({pct}%)</span>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-
-                                                <div className="mt-auto bg-slate-800 p-6 rounded-2xl border border-blue-500/30 border-r-4 border-r-blue-500 text-right">
-                                                    <p className="text-blue-400 font-bold text-sm mb-2">משפט מסכם מנהל:</p>
-                                                    <p className="text-2xl font-bold">{currentQ.summary}</p>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Leaderboard View */}
-                                        {gameState.step === 'leaderboard' && (
-                                            <div className="flex-1 flex flex-col items-center justify-center animate-slide">
-                                                <h2 className="text-4xl font-black mb-10 text-yellow-400">🏆 המובילים 🏆</h2>
-                                                <div className="w-full max-w-md space-y-4">
-                                                    {leaderboard.map((p, i) => (
-                                                        <div key={p.id} className={`flex justify-between items-center p-5 rounded-2xl font-black text-2xl ${i === 0 ? 'bg-yellow-600/20 border border-yellow-500 text-yellow-400 scale-110 shadow-lg shadow-yellow-900/50 mb-6' : 'bg-slate-800 border border-slate-700'}`}>
-                                                            <span>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)+'.'} {p.name}</span>
-                                                            <span>{p.score} נק'</span>
-                                                        </div>
-                                                    ))}
-                                                    {leaderboard.length === 0 && <div className="text-center text-slate-400">טרם נצברו נקודות</div>}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* --- ADMIN: QUESTIONS EDITOR --- */}
-                        {adminTab === 'questions' && (
-                            <div className="space-y-6 animate-slide">
-                                <div className="flex justify-between items-center">
-                                    <h2 className="text-2xl font-black text-blue-300">ניהול שאלות ({dynamicQuestions.length})</h2>
-                                    <button onClick={addQuestion} className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg">➕ הוסף שאלה חדשה</button>
-                                </div>
-                                
-                                {dynamicQuestions.map((q, qIdx) => (
-                                    <div key={q.id} className="glass-panel p-8 rounded-3xl shadow-xl space-y-5 relative">
-                                        <button onClick={() => deleteQuestion(q.id)} className="absolute top-6 left-6 text-red-400 hover:text-red-300 bg-red-900/30 p-2 rounded-lg font-bold transition-all">🗑️ מחק שאלה</button>
-                                        
-                                        <div>
-                                            <label className="block text-sm font-bold text-blue-400 mb-2">שאלה {qIdx + 1}:</label>
-                                            <input type="text" className="w-full p-4 bg-slate-800 border border-slate-600 rounded-xl font-bold text-lg text-white outline-none focus:border-blue-500" value={q.question} onChange={e => updateQuestionData(qIdx, 'question', e.target.value)} />
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-900/50 p-6 rounded-2xl border border-slate-700/50">
-                                            {q.options.map((opt, oIdx) => (
-                                                <div key={opt.id} className={`flex items-center gap-3 p-3 rounded-xl border ${opt.correct ? 'bg-green-900/30 border-green-500/50' : 'bg-slate-800 border-slate-700'}`}>
-                                                    <input type="radio" name={`correct_${q.id}`} checked={opt.correct} onChange={() => setCorrectOption(qIdx, oIdx)} className="w-5 h-5 cursor-pointer accent-green-500" title="סמן כתשובה נכונה" />
-                                                    <input type="text" className="flex-1 bg-transparent border-none outline-none font-bold text-white placeholder-slate-500" value={opt.text} placeholder={`תשובה ${oIdx+1}`} onChange={e => updateOptionText(qIdx, oIdx, e.target.value)} />
-                                                    {opt.correct && <span className="text-green-400 text-xs font-black bg-green-900/50 px-2 py-1 rounded">נכונה</span>}
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-bold text-blue-400 mb-2">משפט מסכם (מופיע לאחר חשיפת התוצאות):</label>
-                                            <input type="text" className="w-full p-4 bg-slate-800 border border-slate-600 rounded-xl text-white outline-none focus:border-blue-500" value={q.summary} onChange={e => updateQuestionData(qIdx, 'summary', e.target.value)} />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
+                            ))}
+                        </div>
                     </main>
                 </div>
             );
