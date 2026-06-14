@@ -14,10 +14,11 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <!-- Confetti Script -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
-        body { font-family: 'Heebo', sans-serif; margin: 0; direction: rtl; background-color: #0f172a; overflow: hidden; /* מניעת גלילה במסך הראשי */ }
+        body { font-family: 'Heebo', sans-serif; margin: 0; direction: rtl; background-color: #0f172a; }
         .glass-panel { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .glass-panel-light { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); }
         .animate-slide { animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
@@ -31,13 +32,13 @@
             transform-origin: 50% 50%;
         }
         
-        /* Custom Scrollbar for admin panel if needed */
-        .overflow-y-auto::-webkit-scrollbar { width: 8px; }
-        .overflow-y-auto::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
-        .overflow-y-auto::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        /* Custom Scrollbar for admin panel */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white h-screen selection:bg-blue-500 selection:text-white">
+<body class="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white min-h-screen selection:bg-blue-500 selection:text-white">
     <div id="root" class="h-full"></div>
 
     <script type="text/babel">
@@ -83,7 +84,7 @@
             }
         ];
 
-        // --- ICONS (משודרגים ויפים יותר) ---
+        // --- ICONS ---
         const IconCheck = () => (
             <svg viewBox="0 0 100 100" className="w-24 h-24 mx-auto mb-4 drop-shadow-[0_0_20px_rgba(34,197,94,0.6)]">
                 <circle cx="50" cy="50" r="45" fill="#22c55e" />
@@ -135,7 +136,7 @@
             const [players, setPlayers] = useState([]);
             const [answers, setAnswers] = useState([]);
             const [dynamicQuestions, setDynamicQuestions] = useState(DEFAULT_QUESTIONS);
-            const [gameState, setGameState] = useState({ step: 'login', questionIndex: 0, startedAt: null }); 
+            const [gameState, setGameState] = useState({ step: 'login', questionIndex: 0 }); 
 
             const [selectedOption, setSelectedOption] = useState(null);
             const [timeLeft, setTimeLeft] = useState(30);
@@ -165,25 +166,26 @@
                 setSelectedOption(null);
             }, [gameState.questionIndex, gameState.step]);
 
+            // Timer Logic (Synced locally on all devices)
             useEffect(() => {
                 let interval;
-                if (gameState.step === 'question' && gameState.startedAt) {
+                if (gameState.step === 'question') {
+                    setTimeLeft(30);
                     interval = setInterval(() => {
-                        const elapsed = Math.floor((Date.now() - gameState.startedAt) / 1000);
-                        const remaining = Math.max(0, 30 - elapsed);
-                        setTimeLeft(remaining);
-                        
-                        // אוטומציה של השרת: כשהזמן נגמר, מעביר מיד לתוצאות
-                        if (remaining === 0 && isAdmin) {
-                            clearInterval(interval);
-                            updateGameState({ step: 'results' });
-                        }
+                        setTimeLeft(prev => {
+                            const next = prev - 1;
+                            if (next <= 0 && isAdmin) {
+                                clearInterval(interval);
+                                updateGameState({ step: 'results' });
+                            }
+                            return Math.max(0, next);
+                        });
                     }, 1000);
                 } else {
                     setTimeLeft(30);
                 }
                 return () => clearInterval(interval);
-            }, [gameState.step, gameState.startedAt, isAdmin]);
+            }, [gameState.step, isAdmin]);
 
             useEffect(() => {
                 if (gameState.step === 'leaderboard') {
@@ -216,7 +218,6 @@
             };
 
             const updateGameState = async (newState) => {
-                if (newState.step === 'question') newState.startedAt = Date.now();
                 await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('config').doc('state').set({...gameState, ...newState}, { merge: true });
             };
 
@@ -285,7 +286,7 @@
             if (!isAdmin) {
                 if (!currentPlayer) {
                     return (
-                        <div className="flex flex-col items-center justify-center h-full p-4 w-full max-w-md mx-auto animate-slide">
+                        <div className="flex flex-col items-center justify-center min-h-screen p-4 w-full max-w-md mx-auto animate-slide">
                             <div className="text-center mb-8">
                                 <IconMetro />
                                 <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-l from-blue-400 to-indigo-400 drop-shadow-lg">ברוכים הבאים לחידון</h1>
@@ -302,7 +303,7 @@
 
                 if (gameState.step === 'login' || gameState.step === 'lobby') {
                     return (
-                        <div className="flex flex-col items-center justify-center h-full p-4 animate-slide text-center overflow-y-auto">
+                        <div className="flex flex-col items-center justify-center min-h-screen p-4 animate-slide text-center overflow-y-auto">
                             <div className="glass-panel-light p-10 rounded-[3rem] shadow-2xl max-w-md w-full border-t-4 border-t-blue-500">
                                 <h2 className="text-4xl font-black mb-4 text-transparent bg-clip-text bg-gradient-to-br from-white to-blue-200">היי {currentPlayer.name}! 👋</h2>
                                 <p className="text-2xl font-bold text-blue-300 mb-8 drop-shadow-md">עוד כמה רגעים מתחילים...</p>
@@ -319,7 +320,7 @@
                 if (gameState.step === 'question' && currentQ) {
                     const isTimeUp = timeLeft <= 0;
                     return (
-                        <div className="flex flex-col items-center h-full p-4 w-full max-w-2xl mx-auto pt-6 animate-slide overflow-y-auto">
+                        <div className="flex flex-col items-center min-h-screen p-4 w-full max-w-2xl mx-auto pt-6 animate-slide overflow-y-auto">
                             <div className="w-full flex justify-between items-center mb-2">
                                 <span className="bg-slate-800/80 px-4 py-1 rounded-full text-sm font-bold text-blue-300 border border-slate-700">שאלה {gameState.questionIndex + 1} / {dynamicQuestions.length}</span>
                                 <span className="font-black text-lg bg-blue-900/50 px-4 py-1 rounded-full text-blue-200 border border-blue-700/50">⭐ {currentPlayer.score} נק'</span>
@@ -348,7 +349,13 @@
                                             `}
                                         >
                                             <span>{opt.text}</span>
-                                            {isSelected && <span className="w-4 h-4 bg-white rounded-full ml-2 shadow-[0_0_10px_white] shrink-0"></span>}
+                                            {isSelected && (
+                                                <span className="flex items-center justify-center bg-blue-400 rounded-full p-1 ml-2 shadow-[0_0_10px_rgba(255,255,255,0.4)] shrink-0">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" className="w-4 h-4">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </span>
+                                            )}
                                         </button>
                                     );
                                 })}
@@ -369,7 +376,7 @@
                     const correctOpt = currentQ.options.find(o => o.correct);
 
                     return (
-                        <div className="flex flex-col items-center justify-center h-full p-4 animate-pop text-center overflow-y-auto">
+                        <div className="flex flex-col items-center justify-center min-h-screen p-4 animate-pop text-center overflow-y-auto">
                             <div className={`glass-panel p-10 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-md border-2 relative overflow-hidden ${isCorrect ? 'border-green-500 bg-gradient-to-b from-green-900/40 to-slate-900/80' : 'border-red-500 bg-gradient-to-b from-red-900/40 to-slate-900/80'}`}>
                                 
                                 {isCorrect ? <IconCheck /> : <IconCross />}
@@ -397,7 +404,7 @@
                 if (gameState.step === 'leaderboard') {
                     const myRank = [...players].sort((a,b) => (b.score||0)-(a.score||0)).findIndex(p => p.id === user.uid) + 1;
                     return (
-                        <div className="flex flex-col items-center justify-center h-full p-4 animate-slide text-center overflow-y-auto">
+                        <div className="flex flex-col items-center justify-center min-h-screen p-4 animate-slide text-center overflow-y-auto">
                             <div className="glass-panel p-10 rounded-[3rem] shadow-[0_0_50px_rgba(234,179,8,0.2)] max-w-md w-full border-2 border-yellow-500/50 bg-gradient-to-b from-yellow-900/20 to-slate-900">
                                 <div className="text-6xl md:text-7xl mb-6 drop-shadow-2xl">🏆</div>
                                 <h2 className="text-2xl md:text-3xl font-black mb-4 text-white">הבט במסך המרכזי!</h2>
@@ -418,30 +425,29 @@
             // ==========================================
             if (adminTab === 'game') {
                 return (
-                    <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 flex flex-col items-center overflow-hidden pb-24">
+                    <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 flex flex-col items-center overflow-y-auto pb-36">
                         
-                        {/* MAIN FULLSCREEN DISPLAY (עם padding bottom למניעת הסתרה) */}
-                        <div className="w-full h-full max-w-6xl px-4 md:px-8 flex flex-col justify-center relative pt-4">
+                        <div className="w-full min-h-full max-w-6xl px-4 md:px-8 flex flex-col justify-center relative py-10">
                             
                             {gameState.step === 'lobby' && (
                                 <div className="text-center animate-slide h-full flex flex-col items-center justify-center">
                                     <IconMetro />
                                     <h1 className="text-5xl md:text-7xl font-black mb-6 text-transparent bg-clip-text bg-gradient-to-b from-white to-blue-300 drop-shadow-2xl">ברוכים הבאים לחידון!</h1>
                                     <div className="text-2xl md:text-3xl font-bold text-blue-300 mb-10 bg-blue-900/30 inline-block px-8 py-3 rounded-full border border-blue-500/30 shadow-lg">ממתינים לשחקנים... ({players.length})</div>
-                                    <div className="flex flex-wrap gap-3 justify-center max-w-4xl mx-auto flex-1 content-start overflow-y-auto w-full px-2">
+                                    <div className="flex flex-wrap gap-3 justify-center max-w-4xl mx-auto w-full px-2">
                                         {players.map(p => <span key={p.id} className="bg-slate-800/80 backdrop-blur px-5 py-2 rounded-full font-black text-lg md:text-xl border-2 border-slate-600 shadow-xl">{p.name}</span>)}
                                     </div>
                                 </div>
                             )}
 
                             {gameState.step === 'question' && currentQ && (
-                                <div className="flex flex-col h-full w-full animate-slide justify-center pb-4">
+                                <div className="flex flex-col h-full w-full animate-slide justify-center">
                                     <div className="flex justify-between items-center mb-6 shrink-0">
                                         <span className="text-blue-400 font-black text-2xl bg-blue-900/30 px-5 py-2 rounded-2xl border border-blue-500/30">שאלה {gameState.questionIndex + 1}</span>
                                         <Timer timeLeft={timeLeft} maxTime={30} />
                                         <span className="text-slate-400 font-bold text-xl bg-slate-800/50 px-5 py-2 rounded-2xl border border-slate-600">ענו: <strong className="text-white">{currentAnswers.length} / {players.length}</strong></span>
                                     </div>
-                                    <div className="flex-1 flex flex-col justify-center min-h-0">
+                                    <div className="flex-1 flex flex-col justify-center">
                                         <h2 className="text-4xl md:text-5xl font-black mb-8 leading-tight text-center drop-shadow-xl shrink-0">{currentQ.question}</h2>
                                         <div className="grid grid-cols-2 gap-4 md:gap-6 w-full shrink-0">
                                             {currentQ.options.map((opt, i) => (
@@ -457,24 +463,32 @@
                             {gameState.step === 'results' && currentQ && (
                                 <div className="flex flex-col h-full animate-slide w-full justify-center">
                                     <h2 className="text-3xl md:text-4xl font-black mb-6 text-center text-blue-300 uppercase tracking-widest shrink-0">תוצאות השאלה</h2>
-                                    <div className="space-y-4 mb-6 flex-1 min-h-0 flex flex-col justify-center">
+                                    <div className="space-y-4 flex-1 flex flex-col justify-center">
                                         {currentQ.options.map(opt => {
                                             const count = currentAnswers.filter(a => a.answerId === opt.id).length;
                                             const pct = currentAnswers.length ? Math.round((count / currentAnswers.length) * 100) : 0;
                                             return (
                                                 <div key={opt.id} className={`relative overflow-hidden rounded-2xl border-2 md:border-4 p-4 md:p-5 flex justify-between items-center z-10 shadow-xl ${opt.correct ? 'border-green-500 bg-green-900/40' : 'border-slate-700 bg-slate-800/60'}`}>
                                                     <div className="absolute top-0 right-0 h-full bg-gradient-to-l from-blue-600/40 to-indigo-600/40 -z-10 transition-all duration-1000" style={{ width: `${pct}%` }}></div>
-                                                    <span className={`font-black text-2xl md:text-3xl z-20 w-3/4 text-right ${opt.correct ? 'text-green-300 drop-shadow-md' : 'text-slate-200'}`}>
-                                                        {opt.text} {opt.correct && "✅"}
+                                                    
+                                                    {/* שינוי האייקון למשהו ברור ומרשים */}
+                                                    <span className={`font-black text-2xl md:text-3xl z-20 w-3/4 text-right flex items-center gap-3 ${opt.correct ? 'text-green-300 drop-shadow-md' : 'text-slate-200'}`}>
+                                                        {opt.text} 
+                                                        {opt.correct && (
+                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="w-8 h-8 text-green-400 drop-shadow-[0_0_12px_rgba(74,222,128,0.9)]">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                        )}
                                                     </span>
+                                                    
                                                     <span className="font-black text-3xl md:text-4xl z-20 text-white drop-shadow-md">{count} <span className="text-xl md:text-2xl text-slate-300">({pct}%)</span></span>
                                                 </div>
                                             );
                                         })}
                                     </div>
 
-                                    {/* HIGHLIGHTED SUMMARY SENTENCE */}
-                                    <div className="shrink-0 bg-gradient-to-r from-blue-600/90 to-indigo-600/90 p-5 md:p-6 rounded-3xl border-2 border-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.6)] text-center transform hover:scale-[1.01] transition-transform duration-500 backdrop-blur-xl">
+                                    {/* המשפט המסכם - כעת ישב ברווח מתחת ללא קשר ללוח הבקרה */}
+                                    <div className="mt-10 shrink-0 bg-gradient-to-r from-blue-600/90 to-indigo-600/90 p-5 md:p-8 rounded-3xl border-2 border-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.6)] text-center transform hover:scale-[1.01] transition-transform duration-500 backdrop-blur-xl">
                                         <p className="text-blue-100 font-bold text-sm md:text-base mb-2 uppercase tracking-widest drop-shadow">משפט מסכם:</p>
                                         <p className="text-3xl md:text-4xl font-black text-white leading-tight drop-shadow-lg">{currentQ.summary}</p>
                                     </div>
@@ -484,7 +498,7 @@
                             {gameState.step === 'leaderboard' && (
                                 <div className="flex flex-col items-center justify-center h-full animate-slide w-full">
                                     <h2 className="text-5xl md:text-6xl font-black mb-10 text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 to-yellow-500 drop-shadow-[0_5px_15px_rgba(234,179,8,0.4)] shrink-0">🏆 המובילים 🏆</h2>
-                                    <div className="w-full max-w-2xl space-y-4 flex-1 min-h-0 flex flex-col justify-center">
+                                    <div className="w-full max-w-2xl space-y-4 flex-1 flex flex-col justify-center">
                                         {leaderboard.map((p, i) => (
                                             <div key={p.id} className={`flex justify-between items-center p-4 md:p-5 rounded-2xl md:rounded-3xl font-black text-2xl md:text-3xl shadow-2xl ${i === 0 ? 'bg-gradient-to-r from-yellow-600/40 to-yellow-500/20 border-2 border-yellow-400 text-yellow-300 scale-105 shadow-[0_0_20px_rgba(234,179,8,0.4)] mb-4' : 'bg-slate-800/80 border border-slate-600 text-white'}`}>
                                                 <span>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)+'.'} {p.name}</span>
@@ -497,7 +511,7 @@
                         </div>
 
                         {/* FLOATING ADMIN CONTROLS (BOTTOM CENTER) */}
-                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 glass-panel px-6 py-3 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex items-center gap-4 z-50 border-t border-white/20 whitespace-nowrap">
+                        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 glass-panel px-6 py-3 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex items-center gap-4 z-50 border-t border-white/20 whitespace-nowrap">
                             <span className="text-slate-400 font-bold text-xs md:text-sm tracking-widest uppercase flex items-center gap-2 hidden md:flex">
                                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                                 בקרת מנהל
@@ -533,7 +547,7 @@
 
             // --- ADMIN: QUESTIONS EDITOR ---
             return (
-                <div className="min-h-screen flex flex-col items-center p-4 w-full h-screen overflow-y-auto">
+                <div className="min-h-screen flex flex-col items-center p-4 w-full overflow-y-auto">
                     <nav className="w-full max-w-5xl flex flex-wrap justify-between items-center glass-panel-light p-4 rounded-2xl shadow-lg mb-6 sticky top-4 z-50 shrink-0">
                         <div className="font-black text-xl md:text-2xl text-blue-300 flex items-center gap-3">
                             ⚙️ פאנל ניהול
