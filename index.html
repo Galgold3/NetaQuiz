@@ -56,7 +56,6 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
-        
         const appId = 'nta-traffic-quiz-v1';
 
         const DEFAULT_QUESTIONS = [
@@ -486,9 +485,10 @@
                                 {currentQ.options.map(opt => {
                                     const isSelected = selectedOption === opt.id;
                                     
-                                    let btnClasses = "p-4 rounded-2xl border-2 text-right font-bold transition-all text-sm md:text-base leading-snug flex items-center justify-between ";
+                                    // עיצוב שמבטל תזוזות. ה-scale הוסר לחלוטין.
+                                    let btnClasses = "p-4 md:p-5 rounded-2xl border-2 text-right font-bold transition-all text-sm md:text-base leading-snug flex items-center justify-between w-full ";
                                     if (isSelected) {
-                                        btnClasses += "bg-blue-600 border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.5)] scale-[1.02] opacity-100";
+                                        btnClasses += "bg-blue-600 border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.5)] opacity-100";
                                     } else if (selectedOption !== null || isTimeUp) {
                                         btnClasses += "opacity-40 bg-slate-800/40 border-slate-800 cursor-not-allowed";
                                     } else {
@@ -502,14 +502,9 @@
                                             disabled={selectedOption !== null || isTimeUp}
                                             className={btnClasses}
                                         >
-                                            <span>{opt.text}</span>
-                                            {isSelected && (
-                                                <span className="flex items-center justify-center bg-blue-400 rounded-full p-1 ml-2 shadow-[0_0_10px_rgba(255,255,255,0.4)] shrink-0">
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" className="w-4 h-4">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                                    </svg>
-                                                </span>
-                                            )}
+                                            <span className="flex-1 pl-4">{opt.text}</span>
+                                            {/* מקום שמור לעיגול. אם נבחר: עיגול כחול זוהר. אם לא נבחר: עיגול ריק בצבע מסגרת */}
+                                            <div className={`w-6 h-6 rounded-full shrink-0 transition-all duration-300 ${isSelected ? 'bg-blue-300 border-blue-300 shadow-[0_0_15px_rgba(147,197,253,0.9)]' : 'border-2 border-slate-500/50'}`}></div>
                                         </button>
                                     );
                                 })}
@@ -590,7 +585,7 @@
                 return (
                     <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 flex flex-col items-center overflow-y-auto pb-36">
                         
-                        <div className="w-full min-h-full max-w-6xl px-4 md:px-8 flex flex-col justify-center relative py-6 mx-auto">
+                        <div className="w-full min-h-full max-w-6xl px-4 md:px-8 flex flex-col justify-center relative py-10">
                             
                             {gameState.step === 'lobby' && (
                                 <div className="text-center animate-slide h-full flex flex-col items-center justify-center">
@@ -604,7 +599,7 @@
                             )}
 
                             {gameState.step === 'question' && currentQ && (
-                                <div className="flex flex-col w-full animate-slide justify-center flex-1 py-4">
+                                <div className="flex flex-col h-full w-full animate-slide justify-center flex-1 py-4">
                                     <div className="flex justify-between items-center mb-6 shrink-0">
                                         <span className="text-blue-400 font-black text-xl md:text-2xl bg-blue-900/30 px-5 py-2 rounded-2xl border border-blue-500/30">שאלה {gameState.questionIndex + 1}</span>
                                         <Timer timeLeft={timeLeft} maxTime={30} />
