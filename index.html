@@ -14,6 +14,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <!-- Confetti Script -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
@@ -56,7 +57,9 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
-        const appId = 'nta-quiz-dark-v1';
+        
+        // שינינו את המזהה כדי שייווצר חדר חדש ונקי ללא השאלות הישנות
+        const appId = 'nta-traffic-quiz-v1';
 
         const DEFAULT_QUESTIONS = [
             { 
@@ -195,7 +198,7 @@
                 id: 'q13', 
                 question: "מדוע שלטים בכבישים מהירים כתובים באותיות קטנות וגדולות (באנגלית/עברית מנוקדת) ולא רק באותיות דפוס גדולות (BLOCK LETTERS)?", 
                 options: [
-                    { id: 'a', text: "א. המוח האנושי מזהה את \"צורת המילה\" הכללית (הודות לאותיות עולות ויורדות) מהר יותר מאשר קריאת אות-אות.", correct: true },
+                    { id: 'a', text: "א. המוח האנושי מזהה את \"צורת המילה\" הכללית מהר יותר מאשר קריאת אות-אות.", correct: true },
                     { id: 'b', text: "ב. זה פשוט חוסך כסף על צבע מחזיר אור בשלטים.", correct: false },
                     { id: 'c', text: "ג. כדי שהשלט ייראה פחות מאיים ויותר ידידותי לנהגים מבוהלים.", correct: false },
                     { id: 'd', text: "ד. זו פשוט העתקה של השילוט הבריטי מתקופת המנדט.", correct: false }
@@ -281,9 +284,15 @@
                 if (!user) return;
                 const path = db.collection('artifacts').doc(appId).collection('public').doc('data');
                 
+                // הוספנו פקודה שבודקת אם זה מסד נתונים חדש וריק, ומכניסה אליו את השאלות שלנו כדי שיופיעו מיד!
                 const unsubQ = path.collection('config').doc('questions').onSnapshot(s => { 
-                    if (s.exists) setDynamicQuestions(s.data().list); 
+                    if (s.exists) {
+                        setDynamicQuestions(s.data().list); 
+                    } else {
+                        path.collection('config').doc('questions').set({ list: DEFAULT_QUESTIONS });
+                    }
                 });
+                
                 const unsubState = path.collection('config').doc('state').onSnapshot(s => { 
                     if (s.exists) setGameState(s.data()); 
                 });
@@ -297,7 +306,7 @@
                 setSelectedOption(null);
             }, [gameState.questionIndex, gameState.step]);
 
-            // Timer Logic (Synced based on server startedAt time)
+            // Timer Logic
             useEffect(() => {
                 let interval;
                 if (gameState.step === 'question' && gameState.startedAt) {
@@ -306,7 +315,6 @@
                         const remaining = Math.max(0, 30 - elapsed);
                         setTimeLeft(remaining);
                         
-                        // אוטומציה של השרת למנהל
                         if (remaining === 0 && isAdmin) {
                             clearInterval(interval);
                             updateGameState({ step: 'results' });
@@ -473,7 +481,7 @@
                                 {currentQ.options.map(opt => {
                                     const isSelected = selectedOption === opt.id;
                                     
-                                    // הגדרת עיצוב אחיד לכפתורים בזמן בחירה / סיום זמן
+                                    // תיקון: אם המשתמש בחר תשובה או נגמר הזמן - כל התשובות הופכות לשקופות (למעט זו שנבחרה)
                                     let btnClasses = "p-4 rounded-2xl border-2 text-right font-bold transition-all text-base md:text-lg flex items-center justify-between ";
                                     if (isSelected) {
                                         btnClasses += "bg-blue-600 border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.5)] scale-[1.02] opacity-100";
