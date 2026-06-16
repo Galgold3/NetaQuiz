@@ -14,6 +14,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <!-- Confetti Script -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
@@ -57,8 +58,8 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
         
-        // מזהה גרסה v3 לאילוץ סנכרון שאלות מעודכנות ללא נקודות בסוף האפשרויות
-        const appId = 'nta-traffic-quiz-v3';
+        // מזהה גרסה v4 לאילוץ סנכרון משפטים מסכמים חדשים מהקובץ המעודכן
+        const appId = 'nta-traffic-quiz-v4';
 
         const DEFAULT_QUESTIONS = [
             { 
@@ -70,7 +71,7 @@
                     { id: 'c', text: "ג. נפתח קורס הנדסת התנועה הראשון על ידי מאיר דיזנגוף", correct: false },
                     { id: 'd', text: "ד. הנהג היחיד בעיר קיבל דו\"ח על מהירות מופרזת של 12 קמ\"ש", correct: false }
                 ],
-                summary: "הידעתם? בעיות תנועה וקונפליקטים בצמתים נוצרים גם כשיש מעט מאוד כלי רכב – הכל עניין של ניהול המרחב."
+                summary: "בעיות תנועה וקונפליקטים בצמתים נוצרים גם כשיש מעט מאוד כלי רכב – הכל עניין של ניהול המרחב."
             },
             { 
                 id: 'q2', 
@@ -81,7 +82,7 @@
                     { id: 'c', text: "ג. נהגים התחילו לנסוע לאחור מרוב פחד ובלבול", correct: false },
                     { id: 'd', text: "ד. הולכי הרגל נבהלו ונשארו בבתים", correct: false }
                 ],
-                summary: "הידעתם? הפסיכולוגיה של הנהג בשילוב תכנון נכון של המרחב הציבורי (כמו למשל, \"רחוב הולנדי\" משולב) משפיע על התנהגות אנושית ובטיחות."
+                summary: "הפסיכולוגיה של הנהג בשילוב תכנון נכון של המרחב הציבורי (כמו למשל, \"רחוב הולנדי\" משולב) משפיע על התנהגות אנושית ובטיחות."
             },
             { 
                 id: 'q3', 
@@ -92,7 +93,7 @@
                     { id: 'c', text: "ג. כדי לעזור לשוטרים להישאר יבשים ולא לעמוד בגשם", correct: false },
                     { id: 'd', text: "ד. כדי להפחית את זיהום האוויר שגרמו הסוסים בלונדון", correct: false }
                 ],
-                summary: "הידעתם? המטרה המקורית של הרמזור הייתה הגנה על הולכי רגל, אך בתכנון תנועת הרק\"ל, מטרת הרמזור היא לתת עדיפות מוחלטת לתחבורה עתירת נוסעים על פני רכבים פרטיים."
+                summary: "המטרה המקורית של הרמזור הייתה הגנה על הולכי רגל, אך בתכנון תנועת הרק\"ל, מטרת הרמזור היא לתת עדיפות מוחלטת לתחבורה עתירת נוסעים על פני רכבים פרטיים."
             },
             { 
                 id: 'q4', 
@@ -103,7 +104,7 @@
                     { id: 'c', text: "ג. סינגפור ויפן", correct: false },
                     { id: 'd', text: "ד. שווייץ ונורווגיה", correct: false }
                 ],
-                summary: "הידעתם? בארץ לא תקבלו דו\"ח על רכב מלוכלך, אבל אם הבוץ יכסה את לוחית הזיהוי שלכם – השוטרים יקנסו אתכם ב-500 ש\"ח (ומצלמות האכיפה בנת\"צים של הרק\"ל פשוט לא יוכלו לשלוח לכם את הדו\"ח החגיגי...)"
+                summary: "בארץ לא תקבלו דו\"ח על רכב מלוכלך, אבל אם הבוץ יכסה את לוחית הזיהוי שלכם – השוטרים יקנסו אתכם ב-500 ש\"ח (ומצלמות האכיפה בנת\"צים של הרק\"ל פשוט לא יוכלו לשלוח לכם את הדו\"ח החגיגי...)"
             },
             { 
                 id: 'q5', 
@@ -114,7 +115,7 @@
                     { id: 'c', text: "ג. אין הבדל, בשני המקומות הם מחוברים ישירות למערכת הניווט של המטרו", correct: false },
                     { id: 'd', text: "ד. בארץ הלחצן משחרר זרם חשמלי קל למי שלוחץ עליו יותר מ-3 פעמים ברצף", correct: false }
                 ],
-                summary: "הידעתם? זהו ההבדל בין מערכות תנועה מתוזמנות מרכזית (זמן קבוע/גל ירוק) לבין מערכות תנועה תלויות ביקוש (מערכות אדפטיביות וחיישנים)."
+                summary: "זהו ההבדל בין מערכות תנועה מתוזמנות מרכזית (זמן קבוע/גל ירוק) לבין מערכות תנועה תלויות ביקוש (מערכות אדפטיביות וחיישנים)."
             },
             { 
                 id: 'q6', 
@@ -125,7 +126,7 @@
                     { id: 'c', text: "ג. בכביש 6 בישראל", correct: false },
                     { id: 'd', text: "ד. בטקסס, ארה\"ב", correct: false }
                 ],
-                summary: "הידעתם? גם בישראל תקנות התעבורה (תקנה 69) אוסרות על עצירה בשול כביש מהיר אלא במקרה חירום. בפסיקה בארץ נקבע שרכב שנתקע בלי דלק אינו נחשב \"כוח עליון או תקלה פתאומית\" אלא רשלנות, והעצירה בשול מסכנת חיים ומפריעה לזרימת התנועה."
+                summary: "גם בישראל תקנות התעבורה (תקנה 69) אוסרות על עצירה בשול כביש מהיר אלא במקרה חירום. בפסיקה בארץ נקבע שרכב שנתקע בלי דלק אינו נחשב \"כוח עליון או תקלה פתאומית\" אלא רשלנות, והעצירה בשול מסכנת חיים ומפריעה לזרימת התנועה."
             },
             { 
                 id: 'q7', 
@@ -136,7 +137,7 @@
                     { id: 'c', text: "ג. אשליית ראייה שגורמת לכביש פנוי להיראות עמוס", correct: false },
                     { id: 'd', text: "ד. כינוי לפקקים שנגרמים בארץ בגלל תקלות תוכנה בוויז", correct: false }
                 ],
-                summary: "הידעתם? זו הסיבה לכך שלעיתים אתם תקועים בפקק שכאשר אתם מגיעים לסופו הוא משתחרר מבלי שראיתם תאונה או עבודות בדרך – פשוט הייתם בקצה של גל בלימה."
+                summary: "זו הסיבה לכך שלעיתים אתם תקועים בפקק שכאשר אתם מגיעים לסופו הוא משתחרר מבלי שראיתם תאונה או עבודות בדרך – פשוט הייתם בקצה של גל בלימה."
             },
             { 
                 id: 'q8', 
@@ -147,7 +148,7 @@
                     { id: 'c', text: "ג. שנתיים מהחיים", correct: false },
                     { id: 'd', text: "ד. חודש אחד בלבד (אבל זה מרגיש כמו נצח)", correct: false }
                 ],
-                summary: "הידעתם? אחת הסיבות שבגללה מנהלי פרויקטים צריכים להאיץ את בניית המטרו והרק\"ל – היא כדי להחזיר לאנשים את הזמן האבוד שלהם."
+                summary: "אחת הסיבות שבגללה מנהלי פרויקטים צריכים להאיץ את בניית המטרו והרק\"ל – היא כדי להחזיר לאנשים את הזמן האבוד שלהם."
             },
             { 
                 id: 'q9', 
@@ -158,7 +159,7 @@
                     { id: 'c', text: "ג. הן תופסות פחות שטח עירוני יקר לעומת צומת רגיל", correct: false },
                     { id: 'd', text: "ד. הן נראות יפות יותר לתושבים בצילומי רחפן", correct: false }
                 ],
-                summary: "הידעתם? זהו ההבדל בין בטיחות (שבו הכיכר מנצחת) לבין קיבולת וזרימת נפחים קיצונית (שם רמזור חכם או הפרדה מפלסית כמו רכבת תחתית הם הפתרון)."
+                summary: "זהו ההבדל בין בטיחות (שבו הכיכר מנצחת) לבין קיבולת וזרימת נפחים קיצונית (שם רמזור חכם או הפרדה מפלסית כמו רכבת תחתית הם הפתרון)."
             },
             { 
                 id: 'q10', 
@@ -169,7 +170,7 @@
                     { id: 'c', text: "ג. נסיעה איטית מאוד של 20 קמ\"ש (כדי שלא יהיו רווחים בין המכוניות)", correct: false },
                     { id: 'd', text: "ד. המהירות לא משנה, רק סוג הרכבים משפיע על הקיבולת", correct: false }
                 ],
-                summary: "הידעתם? פרדוקס זרימת התנועה (מודל חילוף החומרים/גרף הקיבולת) – מהירות גבוהה מדי דורשת מרחקי בטיחות ענקיים בין המכוניות ומורידה את קיבולת הכביש, בעוד שמהירות מתונה ואחידה מייצרת את הזרימה המושלמת."
+                summary: "פרדוקס זרימת התנועה (מודל חילוף החומרים/גרף הקיבולת) – מהירות גבוהה מדי דורשת מרחקי בטיחות ענקיים בין המכוניות ומורידה את קיבולת הכביש, בעוד שמהירות מתונה ואחידה מייצרת את הזרימה המושלמת."
             },
             { 
                 id: 'q11', 
@@ -180,7 +181,7 @@
                     { id: 'c', text: "ג. אנשים מפסיקים להשתמש בתוכנות ניווט ועוברים למפות נייר", correct: false },
                     { id: 'd', text: "ד. התחבורה הציבורית באזור הופכת ליעילה יותר", correct: false }
                 ],
-                summary: "הידעתם? הוכחה מתמטית (מעבר לתופעת \"הביקוש המושרה\") לכך שלא פותרים פקקים על ידי הוספת עוד עוד נתיבים לרכב פרטי."
+                summary: "הוכחה מתמטית (מעבר לתופעת \"הביקוש המושרה\") לכך שלא פותרים פקקים על ידי הוספת עוד ועוד נתיבים לרכב פרטי."
             },
             { 
                 id: 'q12', 
@@ -191,7 +192,7 @@
                     { id: 'c', text: "ג. אין לזה משמעות הנדסית, נתיבי ישראל בחרו צבעים לפי מה שהיה במלאי באותו יום", correct: false },
                     { id: 'd', text: "ד. הצבעים נקבעו לפי רמת הקליטה של הרדיו באותו אזור", correct: false }
                 ],
-                summary: "הידעתם? חשיבות האחידות הוויזואלית והנדסת אנוש בשילוט ותמרור (העברת מידע קריטי לנהג בשבריר שנייה ללא צורך בקריאת טקסט ארוך)."
+                summary: "חשיבות האחידות הוויזואלית והנדסת אנוש בשילוט ותמרור (העברת מידע קריטי לנהג בשבריר שנייה ללא צורך בקריאת טקסט ארוך)."
             },
             { 
                 id: 'q13', 
@@ -202,7 +203,7 @@
                     { id: 'c', text: "ג. כדי שהשלט ייראה פחות מאיים ויותר ידידותי לנהגים מבוהלים", correct: false },
                     { id: 'd', text: "ד. זו פשוט העתקה של השילוט הבריטי מתקופת המנדט שאף אחד לא טרח לשנות", correct: false }
                 ],
-                summary: "הידעתם? כללי התעתיק בין עברית לאנגלית הם כללים שמוכתבים על ידי האקדמיה ללשון העברית. באתר משרד התחבורה יש מסמך עם תעתיק של כל הישובים והשמות שיש לכתוב בשילוט עם תעתיק לאנגלית וערבית."
+                summary: "כללי התעתיק בין עברית לאנגלית הם כללים שמוכתבים על ידי האקדמיה ללשון העברית. באתר משרד התחבורה יש מסמך עם תעתיק של כל הישובים והשמות שיש לכתוב בשילוט עם תעתיק לאנגלית וערבית."
             },
             { 
                 id: 'q14', 
@@ -213,7 +214,7 @@
                     { id: 'c', text: "ג. נהג אחד שנרדם ברמזור והפעיל אפקט דומינו של 100 קילומטרים", correct: false },
                     { id: 'd', text: "ד. השקה של אייפון חדש שגרמה לאנשים לעצור בצד הדרך", correct: false }
                 ],
-                summary: "הידעתם? הפקק היה באוגוסט 2010 והוא גרם לסוחרים מקומיים לנצל את הנהגים שהיו תקועים בפקק ולמכור להם מים ומזון במחירים מופקעים.",
+                summary: "הפקק היה באוגוסט 2010 והוא גרם לסוחרים מקומיים לנצל את הנהגים שהיו תקועים בפקק ולמכור להם מים ומזון במחירים מופקעים.",
                 image: "traffic.jpg"
             }
         ];
@@ -451,7 +452,7 @@
                             <div className="glass-panel-light p-8 rounded-[2rem] w-full text-center shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
                                 <h2 className="text-xl font-bold mb-6 text-blue-200">הכנס שם להצטרפות למשחק</h2>
                                 <input type="text" className="w-full p-4 rounded-xl bg-slate-900/60 border border-blue-500/30 mb-6 text-center text-2xl font-black text-white outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50 transition-all" placeholder="איך קוראים לך?" value={playerName} onChange={e => setPlayerName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleJoin()} />
-                                <button onClick={handleJoin} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white py-4 rounded-xl font-black text-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] hover:-translate-y-1">הצטרפות</button>
+                                <button onClick={handleJoin} className="w-full bg-gradient-to-r from-blue-600 To-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white py-4 rounded-xl font-black text-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] hover:-translate-y-1">הצטרפות</button>
                             </div>
                             <button onClick={() => { const p = prompt("סיסמת מנהל:"); if(p === '12345') setIsAdmin(true); }} className="mt-12 text-slate-500 hover:text-blue-400 text-sm font-bold transition-all">⚙️ כניסת מנהל</button>
                         </div>
@@ -593,7 +594,7 @@
             // ==========================================
             if (adminTab === 'game') {
                 return (
-                    <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 flex flex-col items-center overflow-hidden pb-24">
+                    <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex flex-col items-center overflow-hidden pb-24">
                         
                         <div className="w-full h-full max-w-6xl px-4 md:px-8 flex flex-col justify-between relative pt-4 pb-6 mx-auto">
                             
@@ -664,7 +665,7 @@
 
                                     <div className="mt-3 shrink-0 bg-gradient-to-r from-blue-600/90 to-indigo-600/90 p-4 md:p-5 rounded-3xl border-2 border-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.6)] backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-6 w-full max-w-5xl mx-auto">
                                         <div className="flex-1 text-right">
-                                            <p className="text-blue-100 font-bold text-xs md:text-sm mb-1 uppercase tracking-widest drop-shadow">משפט מסכם:</p>
+                                            <p className="text-blue-100 font-bold text-sm md:text-base mb-1 uppercase tracking-widest drop-shadow">משפט מסכם:</p>
                                             <p className="text-2xl md:text-3xl lg:text-4xl font-black text-white leading-tight drop-shadow-lg">{currentQ.summary}</p>
                                         </div>
                                         {currentQ.image && (
