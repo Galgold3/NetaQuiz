@@ -14,7 +14,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <!-- Confetti Script -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
@@ -32,7 +31,7 @@
             transform-origin: 50% 50%;
         }
         
-        /* Custom Scrollbar for admin panel */
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
@@ -57,7 +56,9 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
-        const appId = 'nta-traffic-quiz-v2';
+        
+        // מזהה גרסה v3 לאילוץ סנכרון שאלות מעודכנות ללא נקודות בסוף האפשרויות
+        const appId = 'nta-traffic-quiz-v3';
 
         const DEFAULT_QUESTIONS = [
             { 
@@ -65,9 +66,9 @@
                 question: "מה קרה בשנת 1922 בתל אביב, כשהיו בעיר רק מכוניות בודדות ומעט חמורים?", 
                 options: [
                     { id: 'a', text: "א. נרשמה התנגשות המכוניות הראשונה בהיסטוריה של העיר (ברחוב הרצל)", correct: true },
-                    { id: 'b', text: "ב. הוכרז ה\"נת\"צ\" הראשון בעולם לעגלות עם סוסים.", correct: false },
-                    { id: 'c', text: "ג. נפתח קורס הנדסת התנועה הראשון על ידי מאיר דיזנגוף.", correct: false },
-                    { id: 'd', text: "ד. הנהג היחיד בעיר קיבל דו\"ח על מהירות מופרזת של 12 קמ\"ש.", correct: false }
+                    { id: 'b', text: "ב. הוכרז ה\"נת\"צ\" הראשון בעולם לעגלות עם סוסים", correct: false },
+                    { id: 'c', text: "ג. נפתח קורס הנדסת התנועה הראשון על ידי מאיר דיזנגוף", correct: false },
+                    { id: 'd', text: "ד. הנהג היחיד בעיר קיבל דו\"ח על מהירות מופרזת של 12 קמ\"ש", correct: false }
                 ],
                 summary: "הידעתם? בעיות תנועה וקונפליקטים בצמתים נוצרים גם כשיש מעט מאוד כלי רכב – הכל עניין של ניהול המרחב."
             },
@@ -80,7 +81,7 @@
                     { id: 'c', text: "ג. נהגים התחילו לנסוע לאחור מרוב פחד ובלבול", correct: false },
                     { id: 'd', text: "ד. הולכי הרגל נבהלו ונשארו בבתים", correct: false }
                 ],
-                summary: "הידעתם? הבנת הפסיכולוגיה של הנהג ואיך תכנון המרחב הציבורי (\"רחוב הולנדי\" משולב) משפיע על התנהגות אנושית ובטיחות."
+                summary: "הידעתם? הפסיכולוגיה של הנהג בשילוב תכנון נכון של המרחב הציבורי (כמו למשל, \"רחוב הולנדי\" משולב) משפיע על התנהגות אנושית ובטיחות."
             },
             { 
                 id: 'q3', 
@@ -91,7 +92,7 @@
                     { id: 'c', text: "ג. כדי לעזור לשוטרים להישאר יבשים ולא לעמוד בגשם", correct: false },
                     { id: 'd', text: "ד. כדי להפחית את זיהום האוויר שגרמו הסוסים בלונדון", correct: false }
                 ],
-                summary: "הידעתם? המטרה המקורית של הרמזור הייתה הגנה על הולכי רגל. בפרקטיקה של מהנדסי תנועה היה נהוג לבחון את קיבלות הרכבים, כיום מסתכלים הרבה יותר על הולכי הרגל וברק\"ל המטרה היא לתת עדיפות מוחלטת לתחבורה עתירת נוסעים על פני רכבים פרטיים"
+                summary: "הידעתם? המטרה המקורית של הרמזור הייתה הגנה על הולכי רגל, אך בתכנון תנועת הרק\"ל, מטרת הרמזור היא לתת עדיפות מוחלטת לתחבורה עתירת נוסעים על פני רכבים פרטיים."
             },
             { 
                 id: 'q4', 
@@ -108,10 +109,10 @@
                 id: 'q5', 
                 question: "מה ההבדל בין לחצני הרמזור של הולכי הרגל בישראל לעומת ערים כמו ניו יורק או לונדון?", 
                 options: [
-                    { id: 'a', text: "א. בניו יורק הם עובדים ובארץ הם סתם קופסאות פלסטיק ליופי.", correct: false },
-                    { id: 'b', text: "ב. בארץ הם לרוב פעילים ומזמינים/מאריכים את האור הירוק להולכי רגל, בעוד שבניו יורק מעל 90% מהם מנותקים והם \"לחצני פלצבו\" פסיכולוגיים בלבד.", correct: true },
-                    { id: 'c', text: "ג. אין הבדל, בשני המקומות הם מחוברים ישירות למערכת הניווט של המטרו.", correct: false },
-                    { id: 'd', text: "ד. בארץ הלחצן משחרר זרםחשמלי קל למי שלוחץ עליו יותר מ-3 פעמים ברצף.", correct: false }
+                    { id: 'a', text: "א. בניו יורק הם עובדים ובארץ הם סתם קופסאות פלסטיק ליופי", correct: false },
+                    { id: 'b', text: "ב. בארץ הם לרוב פעילים ומזמינים/מאריכים את האור הירוק להולכי רגל, בעוד שבניו יורק מעל 90% מהם מנותקים והם \"לחצני פלצבו\" פסיכולוגיים בלבד", correct: true },
+                    { id: 'c', text: "ג. אין הבדל, בשני המקומות הם מחוברים ישירות למערכת הניווט של המטרו", correct: false },
+                    { id: 'd', text: "ד. בארץ הלחצן משחרר זרם חשמלי קל למי שלוחץ עליו יותר מ-3 פעמים ברצף", correct: false }
                 ],
                 summary: "הידעתם? זהו ההבדל בין מערכות תנועה מתוזמנות מרכזית (זמן קבוע/גל ירוק) לבין מערכות תנועה תלויות ביקוש (מערכות אדפטיביות וחיישנים)."
             },
@@ -120,9 +121,9 @@
                 question: "באיזו מדינה אסור על פי חוק לעצור בשולי הכביש המהיר, אפילו אם נגמר לכם הדלק?", 
                 options: [
                     { id: 'a', text: "א. באוטובאן בגרמניה", correct: true },
-                    { id: 'b', text: "ב. באוטוסטרדות של איטליה.", correct: false },
-                    { id: 'c', text: "ג. בכביש 6 בישראל.", correct: false },
-                    { id: 'd', text: "ד. בטקסס, ארה\"ב.", correct: false }
+                    { id: 'b', text: "ב. באוטוסטרדות של איטליה", correct: false },
+                    { id: 'c', text: "ג. בכביש 6 בישראל", correct: false },
+                    { id: 'd', text: "ד. בטקסס, ארה\"ב", correct: false }
                 ],
                 summary: "הידעתם? גם בישראל תקנות התעבורה (תקנה 69) אוסרות על עצירה בשול כביש מהיר אלא במקרה חירום. בפסיקה בארץ נקבע שרכב שנתקע בלי דלק אינו נחשב \"כוח עליון או תקלה פתאומית\" אלא רשלנות, והעצירה בשול מסכנת חיים ומפריעה לזרימת התנועה."
             },
@@ -130,32 +131,32 @@
                 id: 'q7', 
                 question: "מהי \"תופעת הפנטום\" (Phantom Traffic Jam) שנלמדת בהנדסת תנועה?", 
                 options: [
-                    { id: 'a', text: "א. פקק שנוצר בלילה רק בגלל צללים של גשרים ותאורת רחוב.", correct: false },
+                    { id: 'a', text: "א. פקק שנוצר בלילה רק בגלל צללים של גשרים ותאורת רחוב", correct: false },
                     { id: 'b', text: "ב. פקק שנוצר משום מקום בכביש מהיר, לרוב בגלל נהג אחד שלחץ חזק מדי על הבלמים וגרם לגל בלימה שמתגלגל לאחור", correct: true },
-                    { id: 'c', text: "ג. אשליית ראייה שגורמת לכביש פנוי להיראות עמוס.", correct: false },
-                    { id: 'd', text: "ד. כינוי לפקקים שנגרמים בארץ בגלל תקלות תוכנה בוויז.", correct: false }
+                    { id: 'c', text: "ג. אשליית ראייה שגורמת לכביש פנוי להיראות עמוס", correct: false },
+                    { id: 'd', text: "ד. כינוי לפקקים שנגרמים בארץ בגלל תקלות תוכנה בוויז", correct: false }
                 ],
-                summary: "הידעתם? זו הסיבה לכך שלעיתים אתם תקועים בפקק ארוך שכאשר אתם מגיעים לסופו והוא משתחרר אתם לא רואים שום תאונה או עבודות בדרך שגרמו לכך שעמדתם זמן ארוך קודם. – פשוט הייתם בקצה של גל בלימה."
+                summary: "הידעתם? זו הסיבה לכך שלעיתים אתם תקועים בפקק שכאשר אתם מגיעים לסופו הוא משתחרר מבלי שראיתם תאונה או עבודות בדרך – פשוט הייתם בקצה של גל בלימה."
             },
             { 
                 id: 'q8', 
                 question: "על פי מחקרים כמה זמן מחייו מבלה נהג ממוצע בציפייה שהרמזור האדום יתחלף לירוק?", 
                 options: [
-                    { id: 'a', text: "א. בערך שבועיים.", correct: false },
+                    { id: 'a', text: "א. בערך שבועיים", correct: false },
                     { id: 'b', text: "ב. חודשיים – ארבעה חודשים", correct: true },
-                    { id: 'c', text: "ג. שנתיים מהחיים.", correct: false },
-                    { id: 'd', text: "ד. חודש אחד בלבד (אבל זה מרגיש כמו נצח).", correct: false }
+                    { id: 'c', text: "ג. שנתיים מהחיים", correct: false },
+                    { id: 'd', text: "ד. חודש אחד בלבד (אבל זה מרגיש כמו נצח)", correct: false }
                 ],
-                summary: "הידעתם? הסיבה הטובה שבגללה מנהלי פרויקטים צריכים להאיץ את בניית המטרו והרק\"ל – להחזיר לאנשים את הזמן האבוד שלהם."
+                summary: "הידעתם? אחת הסיבות שבגללה מנהלי פרויקטים צריכים להאיץ את בניית המטרו והרק\"ל – היא כדי להחזיר לאנשים את הזמן האבוד שלהם."
             },
             { 
                 id: 'q9', 
                 question: "מבחינה הנדסית, מהו היתרון המרכזי של מעגלי תנועה (כיכרות) על פני צמתים מרומזרים?", 
                 options: [
-                    { id: 'a', text: "א. הן מגדילות את קיבולת כלי הרכב בצומת עמוס בצורה דרמטית.", correct: false },
-                    { id: 'b', text: "ב. הן משפרות באופן מובהק את הבטיחות על ידי הפחתת מהירות הנסיעה וצמצום נקודות הסכסוך בצומת (מ-32 ל-8).", correct: true },
-                    { id: 'c', text: "ג. הן תופסות פחות שטח עירוני יקר לעומת צומת רגיל.", correct: false },
-                    { id: 'd', text: "ד. הן נראות יפות יותר לתושבים בצילומי רחפן.", correct: false }
+                    { id: 'a', text: "א. הן מגדילות את קיבולת כלי הרכב בצומת עמוס בצורה דרמטית", correct: false },
+                    { id: 'b', text: "ב. הן משפרות באופן מובהק את הבטיחות על ידי הפחתת מהירות הנסיעה וצמצום נקודות הסכסוך בצומת (מ-32 ל-8)", correct: true },
+                    { id: 'c', text: "ג. הן תופסות פחות שטח עירוני יקר לעומת צומת רגיל", correct: false },
+                    { id: 'd', text: "ד. הן נראות יפות יותר לתושבים בצילומי רחפן", correct: false }
                 ],
                 summary: "הידעתם? זהו ההבדל בין בטיחות (שבו הכיכר מנצחת) לבין קיבולת וזרימת נפחים קיצונית (שם רמזור חכם או הפרדה מפלסית כמו רכבת תחתית הם הפתרון)."
             },
@@ -163,10 +164,10 @@
                 id: 'q10', 
                 question: "ניסויים ומודלים מראים כי כדי להשיג את \"הקיבולת המקסימלית\" (נפח כלי הרכב הגבוה ביותר שעובר בכביש בשעה), מהי המהירות האופטימלית שבה השיירה צריכה לנסוע?", 
                 options: [
-                    { id: 'a', text: "א. מהירות גבוהה ככל הניתן (110–120 קמ\"ש).", correct: false },
-                    { id: 'b', text: "ב. מהירות קבועה ורציפה של כ-60–70 קמ\"ש.", correct: true },
-                    { id: 'c', text: "ג. נסיעה איטית מאוד של 20 קמ\"ש (כדי שלא יהיו רווחים בין המכוניות).", correct: false },
-                    { id: 'd', text: "ד. המהירות לא משנה, רק סוג הרכבים משפיע על הקיבולת.", correct: false }
+                    { id: 'a', text: "א. מהירות גבוהה ככל הניתן (110–120 קמ\"ש)", correct: false },
+                    { id: 'b', text: "ב. מהירות קבועה ורציפה של כ-60–70 קמ\"ש", correct: true },
+                    { id: 'c', text: "ג. נסיעה איטית מאוד של 20 קמ\"ש (כדי שלא יהיו רווחים בין המכוניות)", correct: false },
+                    { id: 'd', text: "ד. המהירות לא משנה, רק סוג הרכבים משפיע על הקיבולת", correct: false }
                 ],
                 summary: "הידעתם? פרדוקס זרימת התנועה (מודל חילוף החומרים/גרף הקיבולת) – מהירות גבוהה מדי דורשת מרחקי בטיחות ענקיים בין המכוניות ומורידה את קיבולת הכביש, בעוד שמהירות מתונה ואחידה מייצרת את הזרימה המושלמת."
             },
@@ -174,10 +175,10 @@
                 id: 'q11', 
                 question: "לפי \"פרדוקס ברס\" (Braess's paradox) המפורסם בהנדסת תנועה, מה קורה לרשת כבישים קיימת אם מוסיפים לה כביש חדש לגמרי לרכבים פרטיים?", 
                 options: [
-                    { id: 'a', text: "א. זמני הנסיעה של כל הנהגים ברשת עלולים דווקא להתארך בגלל שינוי לרעה בחלוקת זרמי התנועה האנוכיים.", correct: true },
-                    { id: 'b', text: "ב. הפקקים נעלמים באופן אוטומטי ותמידי.", correct: false },
-                    { id: 'c', text: "ג. אנשים מפסיקים להשתמש בתוכנות ניווט ועוברים למפות נייר.", correct: false },
-                    { id: 'd', text: "ד. התחבורה הציבורית באזור הופכת ליעילה יותר.", correct: false }
+                    { id: 'a', text: "א. זמני הנסיעה של כל הנהגים ברשת עלולים דווקא להתארך בגלל שינוי לרעה בחלוקת זרמי התנועה האנוכיים", correct: true },
+                    { id: 'b', text: "ב. הפקקים נעלמים באופן אוטומטי ותמידי", correct: false },
+                    { id: 'c', text: "ג. אנשים מפסיקים להשתמש בתוכנות ניווט ועוברים למפות נייר", correct: false },
+                    { id: 'd', text: "ד. התחבורה הציבורית באזור הופכת ליעילה יותר", correct: false }
                 ],
                 summary: "הידעתם? הוכחה מתמטית (מעבר לתופעת \"הביקוש המושרה\") לכך שלא פותרים פקקים על ידי הוספת עוד עוד נתיבים לרכב פרטי."
             },
@@ -185,10 +186,10 @@
                 id: 'q12', 
                 question: "מה מסמלים הצבעים של שלטי ההכוונה (השילוט) בדרכים הבין-עירוניות בישראל?", 
                 options: [
-                    { id: 'a', text: "א. ירוק = כביש מהיר, כחול = כביש ראשי רגיל, חום = אתר תיירות/לאומי.", correct: false },
+                    { id: 'a', text: "א. ירוק = כביש מהיר, כחול = כביש ראשי רגיל, חום = אתר תיירות/לאומי", correct: false },
                     { id: 'b', text: "ב. כחול = כביש מהיר (כמו כביש 1 או 6), ירוק = כביש ראשי/בין-עירוני רגיל, חום = אתר תיירות או גן לאומי", correct: true },
-                    { id: 'c', text: "ג. אין לזה משמעות הנדסית, נתיבי ישראל בחרו צבעים לפי מה שהיה במלאי באותו יום.", correct: false },
-                    { id: 'd', text: "ד. הצבעים נקבעו לפי רמת הקליטה של הרדיו באותו אזור.", correct: false }
+                    { id: 'c', text: "ג. אין לזה משמעות הנדסית, נתיבי ישראל בחרו צבעים לפי מה שהיה במלאי באותו יום", correct: false },
+                    { id: 'd', text: "ד. הצבעים נקבעו לפי רמת הקליטה של הרדיו באותו אזור", correct: false }
                 ],
                 summary: "הידעתם? חשיבות האחידות הוויזואלית והנדסת אנוש בשילוט ותמרור (העברת מידע קריטי לנהג בשבריר שנייה ללא צורך בקריאת טקסט ארוך)."
             },
@@ -196,21 +197,21 @@
                 id: 'q13', 
                 question: "מדוע שלטים בכבישים מהירים כתובים באותיות קטנות וגדולות (באנגלית/עברית עם ניקוד) ולא רק באותיות דפוס גדולות (BLOCK LETTERS)?", 
                 options: [
-                    { id: 'a', text: "א. המוח האנושי מזהה את \"צורת המילה\" הכללית (הודות לאותיות עולות ויורדות) מהר יותר מאשר קריאת אות-אות.", correct: true },
-                    { id: 'b', text: "ב. זה פשוט חוסך כסף על צבע מחזיר אור בשלטים.", correct: false },
-                    { id: 'c', text: "ג. כדי שהשלט ייראה פחות מאיים ויותר ידידותי לנהגים מבוהלים.", correct: false },
-                    { id: 'd', text: "ד. זו פשוט העתקה של השילוט הבריטי מתקופת המנדט שאף אחד לא טרח לשנות.", correct: false }
+                    { id: 'a', text: "א. המוח האנושי מזהה את \"צורת המילה\" הכללית (הודות לאותיות עולות ויורדות) מהר יותר מאשר קריאת אות-אות", correct: true },
+                    { id: 'b', text: "ב. זה פשוט חוסך כסף על צבע מחזיר אור בשלטים", correct: false },
+                    { id: 'c', text: "ג. כדי שהשלט ייראה פחות מאיים ויותר ידידותי לנהגים מבוהלים", correct: false },
+                    { id: 'd', text: "ד. זו פשוט העתקה של השילוט הבריטי מתקופת המנדט שאף אחד לא טרח לשנות", correct: false }
                 ],
-                summary: "הידעתם? כללי התעתיק בין עברית לאנגלית הם כלללים שמוכתבים על ידי האקדמיה ללשון העברית. באתר משרד התחבורה יש מסמך עם תעתיק של כל הישובים והשמות שיש לכתוב בשילוט עם תעתיק לאנגלית וערבית."
+                summary: "הידעתם? כללי התעתיק בין עברית לאנגלית הם כללים שמוכתבים על ידי האקדמיה ללשון העברית. באתר משרד התחבורה יש מסמך עם תעתיק של כל הישובים והשמות שיש לכתוב בשילוט עם תעתיק לאנגלית וערבית."
             },
             { 
                 id: 'q14', 
                 question: "מה היה הגורם המפתיע לפקק התנועה הארוך ביותר בהיסטוריה (שנמשך 9 ימים בכביש הכניסה לבייג'ינג)?", 
                 options: [
-                    { id: 'a', text: "א. עדר עצום של כבשים וגמלים שחצה את האוטוסטרדה.", correct: false },
+                    { id: 'a', text: "א. עדר עצום של כבשים וגמלים שחצה את האוטוסטרדה", correct: false },
                     { id: 'b', text: "ב. עבודות שדרוג בכביש – בשילוב עם מאות משאיות כבדות שהובילו חומרי בנייה לאותן עבודות בדיוק ונתקעו בעצמן", correct: true },
-                    { id: 'c', text: "ג. נהג אחד שנרדם ברמזור והפעיל אפקט דומינו של 100 קילומטרים.", correct: false },
-                    { id: 'd', text: "ד. השקה של אייפון חדש שגרמה לאנשים לעצור בצד הדרך.", correct: false }
+                    { id: 'c', text: "ג. נהג אחד שנרדם ברמזור והפעיל אפקט דומינו של 100 קילומטרים", correct: false },
+                    { id: 'd', text: "ד. השקה של אייפון חדש שגרמה לאנשים לעצור בצד הדרך", correct: false }
                 ],
                 summary: "הידעתם? הפקק היה באוגוסט 2010 והוא גרם לסוחרים מקומיים לנצל את הנהגים שהיו תקועים בפקק ולמכור להם מים ומזון במחירים מופקעים.",
                 image: "traffic.jpg"
@@ -631,7 +632,6 @@
                                 <div className="flex flex-col w-full h-full animate-slide justify-between">
                                     <h2 className="text-2xl md:text-3xl font-black mb-2 text-center text-blue-300 uppercase tracking-widest shrink-0">תוצאות השאלה</h2>
                                     
-                                    {/* סידור עמודות: ה"וי" עבר לעמודה הימנית (הראשונה ב-RTL) */}
                                     <div className="space-y-2 md:space-y-3 flex-1 flex flex-col justify-center max-w-5xl mx-auto w-full min-h-0">
                                         {currentQ.options.map(opt => {
                                             const count = currentAnswers.filter(a => a.answerId === opt.id).length;
@@ -639,7 +639,6 @@
                                             return (
                                                 <div key={opt.id} className="w-full grid grid-cols-[48px_1fr_48px] items-center gap-4 min-h-0">
                                                     
-                                                    {/* עמודה ימנית: סימון ה"וי" עבר לכאן כדי לקבל עדיפות קריאה מימין לשמאל */}
                                                     <div className="w-12 h-12 shrink-0 flex items-center justify-center">
                                                         {opt.correct && (
                                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="w-12 h-12 text-green-400 drop-shadow-[0_0_12px_rgba(74,222,128,0.9)] animate-pop">
@@ -648,7 +647,6 @@
                                                         )}
                                                     </div>
                                                     
-                                                    {/* עמודה מרכזית: תיבת התשובה הממורכזת לחלוטין */}
                                                     <div className={`flex-1 relative overflow-hidden rounded-xl md:rounded-2xl border-2 p-2.5 md:p-3.5 flex justify-between items-center z-10 shadow-xl min-h-0 ${opt.correct ? 'border-green-500 bg-green-900/40' : 'border-slate-700 bg-slate-800/60'}`}>
                                                         <div className="absolute top-0 right-0 h-full bg-gradient-to-l from-blue-600/30 to-indigo-600/30 -z-10 transition-all duration-1000" style={{ width: `${pct}%` }}></div>
                                                         <span className={`font-black text-base md:text-lg lg:text-xl leading-snug z-20 text-right pl-4 ${opt.correct ? 'text-green-300 drop-shadow-md' : 'text-slate-200'}`}>
@@ -657,7 +655,6 @@
                                                         <span className="font-black text-xl md:text-2xl z-20 text-white drop-shadow-md shrink-0">{count} <span className="text-sm md:text-base text-slate-300">({pct}%)</span></span>
                                                     </div>
 
-                                                    {/* עמודה שמאלית: פלצבו ריק שמאזן את הפריסה ומבטיח שהמרכז יישאר במרכז העמוד */}
                                                     <div className="w-12 h-12 shrink-0"></div>
 
                                                 </div>
@@ -665,7 +662,6 @@
                                         })}
                                     </div>
 
-                                    {/* המשפט המסכם */}
                                     <div className="mt-3 shrink-0 bg-gradient-to-r from-blue-600/90 to-indigo-600/90 p-4 md:p-5 rounded-3xl border-2 border-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.6)] backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-6 w-full max-w-5xl mx-auto">
                                         <div className="flex-1 text-right">
                                             <p className="text-blue-100 font-bold text-xs md:text-sm mb-1 uppercase tracking-widest drop-shadow">משפט מסכם:</p>
@@ -706,7 +702,7 @@
                             )}
                             
                             {gameState.step === 'question' && (
-                                <button onClick={() => updateGameState({ step: 'results' })} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-6 py-2 rounded-full font-black text-base md:text-lg shadow-lg hover:shadow-green-500/50 transition-all hover:-translate-y-1">📊 חשוף תוצאות</button>
+                                <button onClick={() => updateGameState({ step: 'results' })} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-6 py-2 rounded-full font-black text-base md:text-lg shadow-lg hover:shadow-blue-500/50 transition-all hover:-translate-y-1">📊 חשוף תוצאות</button>
                             )}
 
                             {gameState.step === 'results' && (
