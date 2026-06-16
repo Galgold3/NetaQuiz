@@ -139,7 +139,7 @@
             },
             { 
                 id: 'q8', 
-                question: "על פי מחקרים כמה זמן מחייו מבלה נהג ממוצע בציפייה שהרמזור האם יתחלף לירוק?", 
+                question: "על פי מחקרים כמה זמן מחייו מבלה נהג ממוצע בציפייה שהרמזור האדום יתחלף לירוק?", 
                 options: [
                     { id: 'a', text: "א. בערך שבועיים.", correct: false },
                     { id: 'b', text: "ב. חודשיים – ארבעה חודשים", correct: true },
@@ -179,7 +179,7 @@
                     { id: 'c', text: "ג. אנשים מפסיקים להשתמש בתוכנות ניווט ועוברים למפות נייר.", correct: false },
                     { id: 'd', text: "ד. התחבורה הציבורית באזור הופכת ליעילה יותר.", correct: false }
                 ],
-                summary: "הידעתם? הוכחה מתמטית (מעבר לתופעת \"הביקוש המושרה\") לכך שלא פותרים פקקים על ידי הוספת עוד ועוד נתיבים לרכב פרטי."
+                summary: "הידעתם? הוכחה מתמטית (מעבר לתופעת \"הביקוש המושרה\") לכך שלא פותרים פקקים על ידי הוספת עוד עוד נתיבים לרכב פרטי."
             },
             { 
                 id: 'q12', 
@@ -631,7 +631,7 @@
                                 <div className="flex flex-col w-full h-full animate-slide justify-between">
                                     <h2 className="text-2xl md:text-3xl font-black mb-2 text-center text-blue-300 uppercase tracking-widest shrink-0">תוצאות השאלה</h2>
                                     
-                                    {/* שינוי: הפיכת הפריסה לגריד תלת עמודתי קבוע ומאוזן לשמירה על מרכוז מושלם של התיבות */}
+                                    {/* סידור עמודות: ה"וי" עבר לעמודה הימנית (הראשונה ב-RTL) */}
                                     <div className="space-y-2 md:space-y-3 flex-1 flex flex-col justify-center max-w-5xl mx-auto w-full min-h-0">
                                         {currentQ.options.map(opt => {
                                             const count = currentAnswers.filter(a => a.answerId === opt.id).length;
@@ -639,19 +639,7 @@
                                             return (
                                                 <div key={opt.id} className="w-full grid grid-cols-[48px_1fr_48px] items-center gap-4 min-h-0">
                                                     
-                                                    {/* עמודה ימנית: פלצבו ריק שמאזן את הפריסה (RTL) */}
-                                                    <div className="w-12 h-12 shrink-0"></div>
-                                                    
-                                                    {/* עמודה מרכזית: תיבת התשובה הממורכזת לחלוטין */}
-                                                    <div className={`relative overflow-hidden rounded-xl md:rounded-2xl border-2 p-2.5 md:p-3.5 flex justify-between items-center z-10 shadow-xl min-h-0 ${opt.correct ? 'border-green-500 bg-green-900/40' : 'border-slate-700 bg-slate-800/60'}`}>
-                                                        <div className="absolute top-0 right-0 h-full bg-gradient-to-l from-blue-600/30 to-indigo-600/30 -z-10 transition-all duration-1000" style={{ width: `${pct}%` }}></div>
-                                                        <span className={`font-black text-base md:text-lg lg:text-xl leading-snug z-20 text-right pl-4 ${opt.correct ? 'text-green-300 drop-shadow-md' : 'text-slate-200'}`}>
-                                                            {opt.text}
-                                                        </span>
-                                                        <span className="font-black text-xl md:text-2xl z-20 text-white drop-shadow-md shrink-0">{count} <span className="text-sm md:text-base text-slate-300">({pct}%)</span></span>
-                                                    </div>
-
-                                                    {/* עמודה שמאלית: סימון ה"וי" יושב כאן בנפרד ולא דוחף שום אלמנט */}
+                                                    {/* עמודה ימנית: סימון ה"וי" עבר לכאן כדי לקבל עדיפות קריאה מימין לשמאל */}
                                                     <div className="w-12 h-12 shrink-0 flex items-center justify-center">
                                                         {opt.correct && (
                                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="w-12 h-12 text-green-400 drop-shadow-[0_0_12px_rgba(74,222,128,0.9)] animate-pop">
@@ -659,6 +647,18 @@
                                                             </svg>
                                                         )}
                                                     </div>
+                                                    
+                                                    {/* עמודה מרכזית: תיבת התשובה הממורכזת לחלוטין */}
+                                                    <div className={`flex-1 relative overflow-hidden rounded-xl md:rounded-2xl border-2 p-2.5 md:p-3.5 flex justify-between items-center z-10 shadow-xl min-h-0 ${opt.correct ? 'border-green-500 bg-green-900/40' : 'border-slate-700 bg-slate-800/60'}`}>
+                                                        <div className="absolute top-0 right-0 h-full bg-gradient-to-l from-blue-600/30 to-indigo-600/30 -z-10 transition-all duration-1000" style={{ width: `${pct}%` }}></div>
+                                                        <span className={`font-black text-base md:text-lg lg:text-xl leading-snug z-20 text-right pl-4 ${opt.correct ? 'text-green-300 drop-shadow-md' : 'text-slate-200'}`}>
+                                                            {opt.text}
+                                                        </span>
+                                                        <span className="font-black text-xl md:text-2xl z-20 text-white drop-shadow-md shrink-0">{count} <span className="text-sm md:text-base text-slate-300">({pct}%)</span></span>
+                                                    </div>
+
+                                                    {/* עמודה שמאלית: פלצבו ריק שמאזן את הפריסה ומבטיח שהמרכז יישאר במרכז העמוד */}
+                                                    <div className="w-12 h-12 shrink-0"></div>
 
                                                 </div>
                                             );
@@ -706,7 +706,7 @@
                             )}
                             
                             {gameState.step === 'question' && (
-                                <button onClick={() => updateGameState({ step: 'results' })} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-6 py-2 rounded-full font-black text-base md:text-lg shadow-lg hover:shadow-blue-500/50 transition-all hover:-translate-y-1">📊 חשוף תוצאות</button>
+                                <button onClick={() => updateGameState({ step: 'results' })} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-6 py-2 rounded-full font-black text-base md:text-lg shadow-lg hover:shadow-green-500/50 transition-all hover:-translate-y-1">📊 חשוף תוצאות</button>
                             )}
 
                             {gameState.step === 'results' && (
