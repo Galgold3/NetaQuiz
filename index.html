@@ -31,7 +31,7 @@
             transform-origin: 50% 50%;
         }
         
-        /* Custom Scrollbar */
+        /* Custom Scrollbar for admin panel */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
@@ -167,7 +167,7 @@
                     { id: 'c', text: "ג. נסיעה איטית מאוד של 20 קמ\"ש (כדי שלא יהיו רווחים בין המכוניות).", correct: false },
                     { id: 'd', text: "ד. המהירות לא משנה, רק סוג הרכבים משפיע על הקיבולת.", correct: false }
                 ],
-                summary: "הידעתם? פרדוקס זרימת התנועה (מודל חילוף החומרים/גרף הקיבולת) – מהירות גבוהה מדי דורשת מרחקי בטיחות ענקיים בין המכוניות ומורידה את קיבולת הכביש, בעוד שמהירות מתונה ואחידה מייצרת את הזרימה המושלמת."
+                summary: "הידעתם? פרדוקס זרימת התנועה (מודל חילוף החומרים/גרף הקיבולת) – מהירות גבוהה מדי דורשת מרחקי בטיחות ענקיים ומורידה את קיבולת הכביש, בעוד שמהירות מתונה ואחידה מייצרת את הזרימה המושלמת."
             },
             { 
                 id: 'q11', 
@@ -200,7 +200,7 @@
                     { id: 'c', text: "ג. כדי שהשלט ייראה פחות מאיים ויותר ידידותי לנהגים מבוהלים.", correct: false },
                     { id: 'd', text: "ד. זו פשוט העתקה של השילוט הבריטי מתקופת המנדט שאף אחד לא טרח לשנות.", correct: false }
                 ],
-                summary: "הידעתם? כללי התעתיק בין עברית לאנגלית הם כלללים שמוכתבים על ידי האקדמיה ללשון העברית. באתר משרד התחבורה יש מסמך עם תעתיק של כל הישובים והשמות שיש לכתוב בשילוט עם תעתיק לאנגלית וערבית."
+                summary: "הידעתם? המוח מזהה את הצורה הייחודית של המילה כיחידה אחת, מה שמקצר משמעותית את זמן קריאת השלט במהירות גבוהה."
             },
             { 
                 id: 'q14', 
@@ -590,14 +590,11 @@
             // ADMIN VIEW (FULLSCREEN PRESENTATION)
             // ==========================================
             if (adminTab === 'game') {
-                // בדיקה חכמה: האם זו השאלה האחרונה המכילה תמונה ובשלב התוצאות?
-                const isScrollable = currentQ?.image && gameState.step === 'results';
-
                 return (
-                    <div className={`fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 flex flex-col items-center justify-start ${isScrollable ? 'overflow-y-auto' : 'overflow-hidden'}`}>
+                    <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 flex flex-col items-center overflow-hidden pb-24">
                         
-                        {/* מעטפת התוכן המרכזית - תתאים את עצמה דינמית עם הגנות מניעת חיתוך עליון */}
-                        <div className={`w-full max-w-6xl px-4 md:px-8 flex flex-col relative ${isScrollable ? 'min-h-screen py-6 pb-40 justify-start' : 'h-screen py-4 pb-32 justify-between'}`}>
+                        {/* מעטפת התוכן המרכזית - נעולה לחלון אחד ללא גלילה */}
+                        <div className="w-full h-full max-w-6xl px-4 md:px-8 flex flex-col justify-between relative pt-4 pb-6 mx-auto">
                             
                             {gameState.step === 'lobby' && (
                                 <div className="text-center animate-slide h-full flex flex-col items-center justify-center">
@@ -631,15 +628,17 @@
                             )}
 
                             {gameState.step === 'results' && currentQ && (
-                                <div className={`flex flex-col w-full animate-slide ${isScrollable ? 'justify-start space-y-6' : 'h-full justify-between'}`}>
-                                    <h2 className="text-2xl md:text-3xl font-black text-center text-blue-300 uppercase tracking-widest shrink-0">תוצאות השאלה</h2>
+                                <div className="flex flex-col w-full h-full animate-slide justify-between">
+                                    {/* צמצום משמעותי במרווח התחתון של הכותרת */}
+                                    <h2 className="text-2xl md:text-3xl font-black mb-2 text-center text-blue-300 uppercase tracking-widest shrink-0">תוצאות השאלה</h2>
                                     
-                                    <div className={`space-y-2 md:space-y-3 w-full max-w-5xl mx-auto ${isScrollable ? '' : 'flex-1 flex flex-col justify-center'}`}>
+                                    {/* פריסת תשובות עם רווחים קטנים וממוקדים כדי למנוע חריגה */}
+                                    <div className="space-y-2 md:space-y-3 flex-1 flex flex-col justify-center max-w-5xl mx-auto w-full min-h-0">
                                         {currentQ.options.map(opt => {
                                             const count = currentAnswers.filter(a => a.answerId === opt.id).length;
                                             const pct = currentAnswers.length ? Math.round((count / currentAnswers.length) * 100) : 0;
                                             return (
-                                                <div key={opt.id} className="flex items-center gap-3 w-full animate-slide">
+                                                <div key={opt.id} className="flex items-center gap-2 w-full min-h-0">
                                                     <div className="w-10 h-10 shrink-0 flex items-center justify-center">
                                                         {opt.correct && (
                                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="w-10 h-10 text-green-400 drop-shadow-[0_0_12px_rgba(74,222,128,0.9)]">
@@ -647,7 +646,7 @@
                                                             </svg>
                                                         )}
                                                     </div>
-                                                    <div className={`flex-1 relative overflow-hidden rounded-xl md:rounded-2xl border-2 md:border-4 p-2.5 md:p-3.5 flex justify-between items-center z-10 shadow-xl ${opt.correct ? 'border-green-500 bg-green-900/40' : 'border-slate-700 bg-slate-800/60'}`}>
+                                                    <div className={`flex-1 relative overflow-hidden rounded-xl md:rounded-2xl border-2 p-2.5 md:p-3.5 flex justify-between items-center z-10 shadow-md min-h-0 ${opt.correct ? 'border-green-500 bg-green-900/40' : 'border-slate-700 bg-slate-800/60'}`}>
                                                         <div className="absolute top-0 right-0 h-full bg-gradient-to-l from-blue-600/30 to-indigo-600/30 -z-10 transition-all duration-1000" style={{ width: `${pct}%` }}></div>
                                                         <span className={`font-black text-base md:text-lg lg:text-xl leading-snug z-20 text-right pl-4 ${opt.correct ? 'text-green-300 drop-shadow-md' : 'text-slate-200'}`}>
                                                             {opt.text}
@@ -659,14 +658,14 @@
                                         })}
                                     </div>
 
-                                    {/* המשפט המסכם מעוצב ודינמי */}
-                                    <div className="mt-4 shrink-0 bg-gradient-to-r from-blue-600/90 to-indigo-600/90 p-4 md:p-6 rounded-3xl border-2 border-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.6)] text-center backdrop-blur-xl flex flex-col items-center gap-4">
-                                        <div>
+                                    {/* כרטיס משפט מסכם משופר - צומצם המרווח העליון, הוגדל הפונט משמעותית והתמונה מופיעה משמאל ללא גלילה */}
+                                    <div className="mt-3 shrink-0 bg-gradient-to-r from-blue-600/90 to-indigo-600/90 p-4 md:p-5 rounded-3xl border-2 border-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.6)] backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-6 w-full max-w-5xl mx-auto">
+                                        <div className="flex-1 text-right">
                                             <p className="text-blue-100 font-bold text-xs md:text-sm mb-1 uppercase tracking-widest drop-shadow">משפט מסכם:</p>
-                                            <p className="text-base md:text-lg lg:text-xl font-black text-white leading-tight drop-shadow-lg">{currentQ.summary}</p>
+                                            <p className="text-2xl md:text-3xl lg:text-4xl font-black text-white leading-tight drop-shadow-lg">{currentQ.summary}</p>
                                         </div>
                                         {currentQ.image && (
-                                            <img src={currentQ.image} alt="Traffic Illustration" className="w-full max-w-md max-h-60 object-cover rounded-2xl border-2 border-white/20 shadow-2xl animate-pop mt-1" />
+                                            <img src={currentQ.image} alt="Traffic Illustration" className="w-1/4 max-w-[260px] h-24 md:h-32 object-cover rounded-xl border border-white/20 shadow-2xl animate-pop shrink-0" />
                                         )}
                                     </div>
                                 </div>
