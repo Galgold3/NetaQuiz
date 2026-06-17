@@ -11,6 +11,15 @@
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script>
+        Babel.registerPreset('react-classic', {
+            presets: [
+                [Babel.availablePresets['react'], { "runtime": "classic" }]
+            ]
+        });
+    </script>
+
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -24,7 +33,13 @@
         @keyframes slide-up { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .animate-pop { animation: pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
         @keyframes pop { 0% { transform: scale(0.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        .timer-circle { transition: stroke-dashoffset 1s linear; transform: rotate(-90deg); transform-origin: 50% 50%; }
+        
+        .timer-circle {
+            transition: stroke-dashoffset 1s linear;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
@@ -33,7 +48,7 @@
 <body class="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white min-h-screen selection:bg-blue-500 selection:text-white">
     <div id="root" class="h-full"></div>
 
-    <script type="text/babel">
+    <script type="text/babel" data-presets="react-classic">
         const { useState, useEffect, useMemo } = React;
 
         const firebaseConfig = {
@@ -50,7 +65,7 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
         
-        // מזהה התואם במדויק לזה שבמסד הנתונים
+        // מזהה התואם במדויק למסד הנתונים
         const appId = 'nta-quiz-dark-v1';
 
         const DEFAULT_QUESTIONS = [
@@ -140,7 +155,6 @@
                     if (s.exists && s.data().list && s.data().list.length > 0) {
                         setDynamicQuestions(s.data().list); 
                     } else {
-                        // כשהמסד ריק - נזריק מיד את כל 14 השאלות שלנו פנימה
                         path.collection('config').doc('questions').set({ list: DEFAULT_QUESTIONS });
                         setDynamicQuestions(DEFAULT_QUESTIONS);
                     }
@@ -378,7 +392,7 @@
 
                     return (
                         <div className="flex flex-col items-center justify-center min-h-screen p-4 animate-pop text-center overflow-y-auto">
-                            <div className={`glass-panel p-10 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-md border-2 relative overflow-hidden ${isCorrect ? 'border-green-500' : 'border-red-500'}`}>
+                            <div className={`glass-panel p-10 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-md border-2 relative overflow-hidden ${isCorrect ? 'border-green-500 bg-gradient-to-b from-green-900/40 to-slate-900/80' : 'border-red-500 bg-gradient-to-b from-red-900/40 to-slate-900/80'}`}>
                                 {isCorrect ? <IconCheck /> : <IconCross />}
                                 <h2 className={`text-4xl md:text-5xl font-black mb-4 ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>{isCorrect ? "נכון מאוד!" : "טעות..."}</h2>
                                 {!isCorrect && correctOpt && (
