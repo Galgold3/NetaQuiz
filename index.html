@@ -6,7 +6,7 @@
     <title>ברוכים הבאים לחידון הפתיחה של קורס הנדסת תנועה ותחבורה</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght=300;400;700;900&display=swap" rel="stylesheet">
     
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -57,8 +57,8 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
         
-        // הגדרת חדר v5 נקי כדי למנוע קריסה מול נתוני עבר מסונכרנים
-        const appId = 'nta-traffic-quiz-v5';
+        // מזהה חדר נקי v6 למניעת קריסות רינדור וסנכרון
+        const appId = 'nta-traffic-quiz-v6';
 
         const DEFAULT_QUESTIONS = [
             { 
@@ -112,7 +112,7 @@
                         <circle cx="30" cy="30" r={radius} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="5" />
                         <circle cx="30" cy="30" r={radius} fill="none" stroke={isDanger ? "#ef4444" : "#3b82f6"} strokeWidth="5" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" />
                     </svg>
-                    <span className={`text-xl font-black ${isDanger ? 'text-red-400 animate-ping' : 'text-blue-300'}`}>{timeLeft}</span>
+                    <span className="text-xl font-black text-blue-300">{timeLeft}</span>
                 </div>
             );
         };
@@ -142,21 +142,13 @@
                 const path = db.collection('artifacts').doc(appId).collection('public').doc('data');
                 
                 const unsubQ = path.collection('config').doc('questions').onSnapshot(s => { 
-                    if (s.exists) {
-                        setDynamicQuestions(s.data().list); 
-                    } else {
-                        path.collection('config').doc('questions').set({ list: DEFAULT_QUESTIONS });
-                    }
+                    if (s.exists) setDynamicQuestions(s.data().list); 
+                    else path.collection('config').doc('questions').set({ list: DEFAULT_QUESTIONS });
                 });
                 
                 const unsubState = path.collection('config').doc('state').onSnapshot(s => { 
-                    if (s.exists) {
-                        setGameState(s.data()); 
-                    } else {
-                        const initialState = { step: 'lobby', questionIndex: 0, startedAt: null };
-                        path.collection('config').doc('state').set(initialState);
-                        setGameState(initialState);
-                    }
+                    if (s.exists) setGameState(s.data()); 
+                    else path.collection('config').doc('state').set({ step: 'lobby', questionIndex: 0, startedAt: null });
                 });
                 
                 const unsubP = path.collection('players').onSnapshot(s => setPlayers(s.docs.map(d => ({id: d.id, ...d.data()}))));
@@ -208,8 +200,7 @@
                 const isCorrect = q?.options?.find(o => o.id === optId)?.correct || false;
 
                 if (isCorrect) {
-                    const speedBonus = Math.floor((timeLeft / 30) * 50);
-                    const points = 50 + speedBonus;
+                    const points = 50 + Math.floor((timeLeft / 30) * 50);
                     const p = players.find(p => p.id === user.uid);
                     await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(user.uid).update({ score: (p?.score || 0) + points });
                 }
@@ -221,9 +212,7 @@
 
             const updateGameState = async (newState) => {
                 const updatePayload = { ...newState };
-                if (newState.step === 'question') {
-                    updatePayload.startedAt = Date.now();
-                }
+                if (newState.step === 'question') updatePayload.startedAt = Date.now();
                 await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('config').doc('state').set({...gameState, ...updatePayload}, { merge: true });
             };
 
@@ -290,7 +279,7 @@
 
             const leaderboard = useMemo(() => [...players].sort((a,b) => (b.score||0)-(a.score||0)).slice(0, 5), [players]);
             const currentPlayer = players.find(p => p.id === user?.uid);
-            const currentQ = dynamicQuestions[gameState.questionIndex];
+            const currentQ = dynamicQuestions ? dynamicQuestions[gameState.questionIndex] : null;
             const currentAnswers = answers.filter(a => a.questionId === currentQ?.id);
 
             // ==========================================
@@ -307,7 +296,7 @@
                             <div className="glass-panel-light p-8 rounded-[2rem] w-full text-center shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
                                 <h2 className="text-xl font-bold mb-6 text-blue-200">הכנס שם להצטרפות למשחק</h2>
                                 <input type="text" className="w-full p-4 rounded-xl bg-slate-900/60 border border-blue-500/30 mb-6 text-center text-2xl font-black text-white outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50 transition-all" placeholder="איך קוראים לך?" value={playerName} onChange={e => setPlayerName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleJoin()} />
-                                <button onClick={handleJoin} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white py-4 rounded-xl font-black text-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] hover:-translate-y-1">הצטרפות</button>
+                                <button onClick={handleJoin} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white py-4 rounded-xl font-black text-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] animate-pulse">הצטרפות</button>
                             </div>
                             <button onClick={() => { const p = prompt("סיסמת מנהל:"); if(p === '12345') setIsAdmin(true); }} className="mt-12 text-slate-500 hover:text-blue-400 text-sm font-bold transition-all">⚙️ כניסת מנהל</button>
                         </div>
@@ -380,13 +369,18 @@
                     const correctOpt = currentQ.options && currentQ.options.find(o => o.correct);
 
                     return (
-                        <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
-                            <div className={`glass-panel p-10 rounded-[3rem] w-full max-w-md border-2 relative overflow-hidden ${isCorrect ? 'border-green-500' : 'border-red-500'}`}>
+                        <div className="flex flex-col items-center justify-center min-h-screen p-4 animate-pop text-center overflow-y-auto">
+                            <div className={`glass-panel p-10 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-md border-2 relative overflow-hidden ${isCorrect ? 'border-green-500 bg-gradient-to-b from-green-900/40 to-slate-900/80' : 'border-red-500 bg-gradient-to-b from-red-900/40 to-slate-900/80'}`}>
+                                
                                 {isCorrect ? <IconCheck /> : <IconCross />}
-                                <h2 className={`text-4xl font-black mb-4 ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>{isCorrect ? "נכון מאוד!" : "טעות..."}</h2>
+                                
+                                <h2 className={`text-4xl font-black mb-4 ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>
+                                    {isCorrect ? "נכון מאוד!" : "טעות..."}
+                                </h2>
+                                
                                 {!isCorrect && correctOpt && (
-                                    <div className="mt-6 bg-slate-900/80 p-5 rounded-2xl text-right border border-slate-700">
-                                        <p className="text-xs text-red-300 font-bold mb-2 uppercase">התשובה הנכונה:</p>
+                                    <div className="mt-6 bg-slate-900/80 p-5 rounded-2xl border border-slate-700 text-right shadow-inner">
+                                        <p className="text-xs text-red-300 font-bold mb-2 uppercase tracking-wide">התשובה הנכונה:</p>
                                         <p className="font-bold text-white text-sm md:text-base">{correctOpt.text}</p>
                                     </div>
                                 )}
@@ -399,7 +393,7 @@
                     const myRank = [...players].sort((a,b) => (b.score||0)-(a.score||0)).findIndex(p => p.id === user.uid) + 1;
                     return (
                         <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
-                            <div className="glass-panel p-10 rounded-[3rem] max-w-md w-full border-2 border-yellow-500/50">
+                            <div className="glass-panel p-10 rounded-[3rem] shadow-[0_0_50px_rgba(234,179,8,0.2)] max-w-md w-full border-2 border-yellow-500/50">
                                 <div className="text-6xl mb-6">🏆</div>
                                 <h2 className="text-2xl font-black mb-4">הבט במסך המרכזי!</h2>
                                 <p className="text-lg">המיקום שלך כרגע: <strong className="text-yellow-400 text-3xl block mt-2">#{myRank}</strong></p>
@@ -407,6 +401,7 @@
                         </div>
                     );
                 }
+
                 return null;
             }
 
@@ -417,13 +412,14 @@
                 return (
                     <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 flex flex-col items-center overflow-hidden pb-24">
                         <div className="w-full h-full max-w-6xl px-4 md:px-8 flex flex-col justify-between relative pt-4 pb-6 mx-auto">
+                            
                             {gameState.step === 'lobby' && (
                                 <div className="text-center h-full flex flex-col items-center justify-center">
                                     <IconMetro />
                                     <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight">ברוכים הבאים לחידון הפתיחה של קורס הנדסת תנועה ותחבורה</h1>
-                                    <div className="text-2xl font-bold text-blue-300 mb-10 bg-blue-900/30 px-8 py-3 rounded-full">ממתינים לשחקנים... ({players.length})</div>
+                                    <div className="text-2xl font-bold text-blue-300 mb-10 bg-blue-900/30 px-8 py-3 rounded-full shadow-lg">ממתינים לשחקנים... ({players.length})</div>
                                     <div className="flex flex-wrap gap-3 justify-center">
-                                        {players.map(p => <span key={p.id} className="bg-slate-800/80 px-5 py-2 rounded-full font-black border-2 border-slate-600">{p.name}</span>)}
+                                        {players.map(p => <span key={p.id} className="bg-slate-800/80 px-5 py-2 rounded-full font-black border-2 border-slate-600 shadow-xl">{p.name}</span>)}
                                     </div>
                                 </div>
                             )}
@@ -431,14 +427,14 @@
                             {gameState.step === 'question' && currentQ && (
                                 <div className="flex flex-col h-full w-full justify-center flex-1">
                                     <div className="flex justify-between items-center mb-4 shrink-0">
-                                        <span className="text-blue-400 font-black text-xl md:text-2xl bg-blue-900/30 px-5 py-2 rounded-2xl">שאלה {gameState.questionIndex + 1}</span>
-                                        <Timer timeLeft={timeLeft} />
-                                        <span className="text-slate-400 font-bold text-lg md:text-xl bg-slate-800/50 px-5 py-2 rounded-2xl">ענו: <strong className="text-white">{currentAnswers.length} / {players.length}</strong></span>
+                                        <span className="text-blue-400 font-black text-xl md:text-2xl bg-blue-900/30 px-5 py-2 rounded-2xl border border-blue-500/30">שאלה {gameState.questionIndex + 1}</span>
+                                        <Timer timeLeft={timeLeft} maxTime={30} />
+                                        <span className="text-slate-400 font-bold text-lg md:text-xl bg-slate-800/50 px-5 py-2 rounded-2xl border border-slate-600">ענו: <strong className="text-white">{currentAnswers.length} / {players.length}</strong></span>
                                     </div>
-                                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-black mb-6 leading-tight text-center">{currentQ.question}</h2>
-                                    <div className="grid grid-cols-2 gap-4 w-full">
+                                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-black mb-6 leading-tight text-center drop-shadow-xl">{currentQ.question}</h2>
+                                    <div className="grid grid-cols-2 gap-4 w-full shrink-0">
                                         {currentQ.options && currentQ.options.map((opt) => (
-                                            <div key={opt.id} className="bg-slate-800/60 p-4 md:p-6 rounded-2xl border-2 border-slate-600 text-lg md:text-xl lg:text-2xl font-bold text-center flex items-center justify-center min-h-[90px]">
+                                            <div key={opt.id} className="bg-slate-800/60 backdrop-blur-md p-4 md:p-6 rounded-2xl md:rounded-3xl border-2 border-slate-600 text-lg md:text-xl lg:text-2xl leading-snug font-bold text-center flex items-center justify-center min-h-[90px] shadow-2xl">
                                                 {opt.text}
                                             </div>
                                         ))}
@@ -449,36 +445,42 @@
                             {gameState.step === 'results' && currentQ && (
                                 <div className="flex flex-col w-full h-full animate-slide justify-between">
                                     <h2 className="text-2xl md:text-3xl font-black mb-2 text-center text-blue-300 uppercase tracking-widest">תוצאות השאלה</h2>
-                                    <div className="space-y-2 md:space-y-3 flex-1 flex flex-col justify-center max-w-5xl mx-auto w-full">
+                                    
+                                    <div className="space-y-2 md:space-y-3 flex-1 flex flex-col justify-center max-w-5xl mx-auto w-full min-h-0">
                                         {currentQ.options && currentQ.options.map(opt => {
                                             const count = currentAnswers.filter(a => a.answerId === opt.id).length;
                                             const pct = currentAnswers.length ? Math.round((count / currentAnswers.length) * 100) : 0;
                                             return (
-                                                <div key={opt.id} className="w-full grid grid-cols-[48px_1fr_48px] items-center gap-4">
+                                                <div key={opt.id} className="w-full grid grid-cols-[48px_1fr_48px] items-center gap-4 min-h-0">
+                                                    
                                                     <div className="w-12 h-12 shrink-0 flex items-center justify-center">
                                                         {opt.correct && (
-                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="w-12 h-12 text-green-400 animate-pop">
+                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="w-12 h-12 text-green-400 drop-shadow-[0_0_12px_rgba(74,222,128,0.9)] animate-pop">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                                             </svg>
                                                         )}
                                                     </div>
-                                                    <div className={`flex-1 relative overflow-hidden rounded-xl md:rounded-2xl border-2 p-2.5 md:p-3.5 flex justify-between items-center z-10 ${opt.correct ? 'border-green-500 bg-green-900/40' : 'border-slate-700 bg-slate-800/60'}`}>
-                                                        <div className="absolute top-0 right-0 h-full bg-gradient-to-l from-blue-600/30 to-indigo-600/30 -z-10" style={{ width: `${pct}%` }}></div>
-                                                        <span className="font-black text-base md:text-lg lg:text-xl pl-4">{opt.text}</span>
-                                                        <span className="font-black text-xl md:text-2xl text-white">{count} ({pct}%)</span>
+                                                    
+                                                    <div className={`flex-1 relative overflow-hidden rounded-xl md:rounded-2xl border-2 p-2.5 md:p-3.5 flex justify-between items-center z-10 shadow-xl min-h-0 ${opt.correct ? 'border-green-500 bg-green-900/40' : 'border-slate-700 bg-slate-800/60'}`}>
+                                                        <div className="absolute top-0 right-0 h-full bg-gradient-to-l from-blue-600/30 to-indigo-600/30 -z-10 transition-all duration-1000" style={{ width: `${pct}%` }}></div>
+                                                        <span className="font-black text-base md:text-lg lg:text-xl leading-snug z-20 text-right pl-4">{opt.text}</span>
+                                                        <span className="font-black text-xl md:text-2xl z-20 text-white drop-shadow-md shrink-0">{count} <span className="text-sm md:text-base text-slate-300">({pct}%)</span></span>
                                                     </div>
+
                                                     <div className="w-12 h-12 shrink-0"></div>
+
                                                 </div>
                                             );
                                         })}
                                     </div>
-                                    <div className="mt-3 shrink-0 bg-gradient-to-r from-blue-600/90 to-indigo-600/90 p-4 md:p-5 rounded-3xl border-2 border-blue-400 flex flex-col md:flex-row items-center justify-between gap-6 w-full max-w-5xl mx-auto">
+
+                                    <div className="mt-3 shrink-0 bg-gradient-to-r from-blue-600/90 to-indigo-600/90 p-4 md:p-5 rounded-3xl border-2 border-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.6)] backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-6 w-full max-w-5xl mx-auto">
                                         <div className="flex-1 text-right">
                                             <p className="text-blue-100 font-bold text-xs mb-1 uppercase">לסיכום:</p>
-                                            <p className="text-xl md:text-2xl lg:text-3xl font-black text-white leading-tight">{currentQ.summary}</p>
+                                            <p className="text-xl md:text-2xl lg:text-3xl font-black text-white leading-tight drop-shadow-lg">{currentQ.summary}</p>
                                         </div>
                                         {currentQ.image && (
-                                            <img src={currentQ.image} alt="Traffic Illustration" className="w-1/4 max-w-[260px] h-24 md:h-32 object-cover rounded-xl border border-white/20 shadow-2xl animate-pop shrink-0" />
+                                            <img src={currentQ.image} alt="Illustration" className="w-1/4 max-w-[260px] h-24 md:h-32 object-cover rounded-xl border border-white/20 shadow-2xl shrink-0" />
                                         )}
                                     </div>
                                 </div>
@@ -486,12 +488,12 @@
 
                             {gameState.step === 'leaderboard' && (
                                 <div className="flex flex-col items-center justify-center h-full w-full">
-                                    <h2 className="text-5xl font-black mb-10 text-yellow-400">🏆 המובילים 🏆</h2>
-                                    <div className="w-full max-w-2xl space-y-4">
+                                    <h2 className="text-5xl md:text-6xl font-black mb-10 text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 to-yellow-500">🏆 המובילים 🏆</h2>
+                                    <div className="w-full max-w-2xl space-y-4 flex-1 flex flex-col justify-center">
                                         {leaderboard.map((p, i) => (
-                                            <div key={p.id} className={`flex justify-between items-center p-4 rounded-2xl font-black text-2xl ${i === 0 ? 'border-2 border-yellow-400 text-yellow-300' : 'bg-slate-800/80'}`}>
+                                            <div key={p.id} className={`flex justify-between items-center p-4 rounded-2xl font-black text-2xl shadow-2xl ${i === 0 ? 'border-2 border-yellow-400 text-yellow-300' : 'bg-slate-800/80 border border-slate-600'}`}>
                                                 <span>{i+1}. {p.name}</span>
-                                                <span>{p.score} נק'</span>
+                                                <span className="font-bold">{p.score} <span className="text-sm opacity-70">נק'</span></span>
                                             </div>
                                         ))}
                                     </div>
@@ -499,11 +501,17 @@
                             )}
                         </div>
 
-                        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 glass-panel px-6 py-3 rounded-full flex items-center gap-4 whitespace-nowrap">
-                            {gameState.step === 'lobby' && <button onClick={() => updateGameState({ step: 'question', questionIndex: 0 })} className="bg-green-500 px-6 py-2 rounded-full font-black">🚀 התחל משחק</button>}
-                            {gameState.step === 'question' && <button onClick={() => updateGameState({ step: 'results' })} className="bg-blue-600 px-6 py-2 rounded-full font-black">📊 חשוף תוצאות</button>}
-                            {gameState.step === 'results' && <button onClick={() => updateGameState({ step: 'leaderboard' })} className="bg-yellow-600 px-6 py-2 rounded-full font-black">🏆 טבלת מובילים</button>}
-                            {gameState.step === 'leaderboard' && (gameState.questionIndex < dynamicQuestions.length - 1 ? <button onClick={() => updateGameState({ step: 'question', questionIndex: gameState.questionIndex + 1 })} className="bg-blue-600 px-6 py-2 rounded-full font-black">➔ לשאלה הבאה</button> : <span className="text-green-400 font-black px-4">סיום המשחק! 🎉</span>)}
+                        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 glass-panel px-6 py-3 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex items-center gap-4 z-50 whitespace-nowrap">
+                            <span className="text-slate-400 font-bold text-xs tracking-widest uppercase flex items-center gap-2 hidden md:flex">
+                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> בקרת מנהל
+                            </span>
+                            <div className="h-6 w-px bg-slate-700 hidden md:block"></div>
+
+                            {gameState.step === 'lobby' && <button onClick={() => updateGameState({ step: 'question', questionIndex: 0 })} className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-2 rounded-full font-black">🚀 התחל משחק</button>}
+                            {gameState.step === 'question' && <button onClick={() => updateGameState({ step: 'results' })} className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-full font-black">📊 חשוף תוצאות</button>}
+                            {gameState.step === 'results' && <button onClick={() => updateGameState({ step: 'leaderboard' })} className="bg-gradient-to-r from-yellow-600 to-orange-500 text-white px-6 py-2 rounded-full font-black">🏆 טבלת מובילים</button>}
+                            {gameState.step === 'leaderboard' && (gameState.questionIndex < dynamicQuestions.length - 1 ? <button onClick={() => updateGameState({ step: 'question', questionIndex: gameState.questionIndex + 1 })} className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-full font-black">➔ לשאלה הבאה</button> : <span className="text-green-400 font-black px-4">סיום המשחק! 🎉</span>)}
+                            
                             <div className="h-6 w-px bg-slate-700"></div>
                             <button onClick={() => setAdminTab('questions')} className="text-slate-300 hover:text-white font-bold bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-full text-sm">⚙️ עריכת שאלות</button>
                         </div>
@@ -513,23 +521,26 @@
 
             return (
                 <div className="min-h-screen flex flex-col items-center p-4 w-full overflow-y-auto">
-                    <nav className="w-full max-w-5xl flex justify-between items-center glass-panel p-4 rounded-2xl mb-6">
+                    <nav className="w-full max-w-5xl flex justify-between items-center glass-panel p-4 rounded-2xl mb-6 sticky top-4 z-50 shrink-0">
                         <div className="font-black text-xl text-blue-300">⚙️ פאנל ניהול</div>
                         <div className="flex gap-2">
                             <button onClick={() => setAdminTab('game')} className="px-4 py-2 rounded-xl bg-blue-600 font-bold">חזור למשחק ➔</button>
                         </div>
                     </nav>
-                    <main className="w-full max-w-5xl pb-10">
-                        <div className="flex justify-between items-center mb-6 bg-slate-800/50 p-5 rounded-3xl">
+
+                    <main className="w-full max-w-5xl pb-10 animate-slide">
+                        <div className="flex justify-between items-center mb-6 bg-slate-800/50 p-5 rounded-3xl border border-slate-700 shadow-xl">
                             <div className="flex gap-3">
                                 <button onClick={saveAllQuestions} className="bg-blue-600 px-5 py-2.5 rounded-xl font-black">💾 שמור שינויים</button>
                                 <button onClick={addQuestion} className="bg-green-600 px-5 py-2.5 rounded-xl font-black">➕ הוסף שאלה</button>
-                                <button onClick={resetGame} className="bg-red-900 px-5 py-2.5 rounded-xl font-bold">🗑️ איפוס</button>
+                                <button onClick={resetGame} className="bg-red-900 px-5 py-2.5 rounded-xl font-bold">🗑️ איפוס משחק</button>
                             </div>
+                            <h2 className="text-xl font-black text-slate-300">שאלות: {dynamicQuestions.length}</h2>
                         </div>
+                        
                         <div className="space-y-6">
                             {dynamicQuestions.map((q, qIdx) => (
-                                <div key={q.id} className="glass-panel p-6 rounded-[2.5rem] relative">
+                                <div key={q.id} className="glass-panel p-6 rounded-[2.5rem] shadow-2xl relative">
                                     <button onClick={() => deleteQuestion(q.id)} className="absolute top-4 left-4 text-red-400">מחק 🗑️</button>
                                     <div className="mb-5 mt-4">
                                         <label className="block text-xs font-black text-blue-400 mb-2">שאלה {qIdx + 1}</label>
@@ -538,7 +549,7 @@
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
                                         {q.options && q.options.map((opt, oIdx) => (
                                             <div key={opt.id} className={`flex items-center gap-3 p-3 rounded-2xl border-2 ${opt.correct ? 'border-green-500 bg-green-900/20' : 'border-slate-700 bg-slate-800'}`}>
-                                                <input type="radio" checked={opt.correct} onChange={() => setCorrectOption(qIdx, oIdx)} />
+                                                <input type="radio" name={`correct_${q.id}`} checked={opt.correct} onChange={() => setCorrectOption(qIdx, oIdx)} />
                                                 <input type="text" className="flex-1 bg-transparent border-none outline-none text-white font-bold" value={opt.text} onChange={e => updateOptionText(qIdx, oIdx, e.target.value)} />
                                             </div>
                                         ))}
@@ -554,6 +565,7 @@
                 </div>
             );
         }
+
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
