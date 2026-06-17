@@ -311,7 +311,7 @@
                 setSelectedOption(null);
             }, [gameState.questionIndex, gameState.step]);
 
-            // Timer Logic
+            // Timer Logic (תיקון באג הקריסה בשורה הזו בשם הפונקציה המעדכנת)
             useEffect(() => {
                 let interval;
                 if (gameState.step === 'question' && gameState.startedAt) {
@@ -326,7 +326,7 @@
                         }
                     }, 1000);
                 } else {
-                    timeLeft(30);
+                    setTimeLeft(30);
                 }
                 return () => clearInterval(interval);
             }, [gameState.step, gameState.startedAt, isAdmin]);
@@ -399,7 +399,7 @@
                         { id: 'a', text: "תשובה 1", correct: true }, { id: 'b', text: "תשובה 2", correct: false },
                         { id: 'c', text: "תשובה 3", correct: false }, { id: 'd', text: "תשובה 4", correct: false }
                     ],
-                    summary: "משפט סיכום לשאלה."
+                    summary: "לסיכום:"
                 };
                 setDynamicQuestions([...dynamicQuestions, newQ]);
             };
@@ -444,7 +444,6 @@
                         <div className="flex flex-col items-center justify-center min-h-screen p-4 w-full max-w-md mx-auto animate-slide">
                             <div className="text-center mb-8">
                                 <IconMetro />
-                                {/* שינוי כותרת ראשית למשתתף */}
                                 <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-l from-blue-400 to-indigo-400 drop-shadow-lg leading-tight px-4">ברוכים הבאים לחידון הפתיחה של קורס הנדסת תנועה ותחבורה</h1>
                             </div>
                             <div className="glass-panel-light p-8 rounded-[2rem] w-full text-center shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
@@ -599,9 +598,8 @@
                             {gameState.step === 'lobby' && (
                                 <div className="text-center animate-slide h-full flex flex-col items-center justify-center">
                                     <IconMetro />
-                                    {/* שינוי כותרת מסך ההקרנה הראשי בלובי */}
                                     <h1 className="text-4xl md:text-6xl font-black mb-6 text-transparent bg-clip-text bg-gradient-to-b from-white to-blue-300 drop-shadow-2xl max-w-4xl mx-auto leading-tight">ברוכים הבאים לחידון הפתיחה של קורס הנדסת תנועה ותחבורה</h1>
-                                    <div className="text-xl md:text-2xl font-bold text-blue-300 mb-10 bg-blue-900/30 inline-block px-8 py-3 rounded-full border border-blue-500/30 shadow-lg">ממתינים לשחקנים... ({players.length})</div>
+                                    <div className="text-2xl md:text-3xl font-bold text-blue-300 mb-10 bg-blue-900/30 inline-block px-8 py-3 rounded-full border border-blue-500/30 shadow-lg">ממתינים לשחקנים... ({players.length})</div>
                                     <div className="flex flex-wrap gap-3 justify-center max-w-4xl mx-auto w-full px-2">
                                         {players.map(p => <span key={p.id} className="bg-slate-800/80 backdrop-blur px-5 py-2 rounded-full font-black text-lg md:text-xl border-2 border-slate-600 shadow-xl">{p.name}</span>)}
                                     </div>
@@ -702,7 +700,7 @@
                             )}
                             
                             {gameState.step === 'question' && (
-                                <button onClick={() => updateGameState({ step: 'results' })} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-6 py-2 rounded-full font-black text-base md:text-lg shadow-lg hover:shadow-green-500/50 transition-all hover:-translate-y-1">📊 חשוף תוצאות</button>
+                                <button onClick={() => updateGameState({ step: 'results' })} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-6 py-2 rounded-full font-black text-base md:text-lg shadow-lg hover:shadow-blue-500/50 transition-all hover:-translate-y-1">📊 חשוף תוצאות</button>
                             )}
 
                             {gameState.step === 'results' && (
