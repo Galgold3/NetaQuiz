@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ברוכים הבאים לחידון הפתיחה של קורס הנדסת תנועה ותחבורה</title>
+    <title>ברוכים הבאים לחידון</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700;900&display=swap" rel="stylesheet">
@@ -14,6 +14,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <!-- Confetti Script -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
@@ -56,9 +57,7 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
-        
-        // החזרת המזהה המדויק התואם לחשבון ה-Firebase הפעיל שלך
-        const appId = 'nta-quiz-dark-v1';
+        const appId = 'nta-traffic-quiz-v2';
 
         const DEFAULT_QUESTIONS = [
             { 
@@ -66,11 +65,11 @@
                 question: "מה קרה בשנת 1922 בתל אביב, כשהיו בעיר רק מכוניות בודדות ומעט חמורים?", 
                 options: [
                     { id: 'a', text: "א. נרשמה התנגשות המכוניות הראשונה בהיסטוריה של העיר (ברחוב הרצל)", correct: true },
-                    { id: 'b', text: "ב. הוכרז ה\"נת\"צ\" הראשון בעולם לעגלות עם סוסים", correct: false },
-                    { id: 'c', text: "ג. נפתח קורס הנדסת התנועה הראשון על ידי מאיר דיזנגוף", correct: false },
-                    { id: 'd', text: "ד. הנהג היחיד בעיר קיבל דו\"ח על מהירות מופרזת של 12 קמ\"ש", correct: false }
+                    { id: 'b', text: "ב. הוכרז ה\"נת\"צ\" הראשון בעולם לעגלות עם סוסים.", correct: false },
+                    { id: 'c', text: "ג. נפתח קורס הנדסת התנועה הראשון על ידי מאיר דיזנגוף.", correct: false },
+                    { id: 'd', text: "ד. הנהג היחיד בעיר קיבל דו\"ח על מהירות מופרזת של 12 קמ\"ש.", correct: false }
                 ],
-                summary: "בעיות תנועה וקונפליקטים בצמתים נוצרים גם כשיש מעט מאוד כלי רכב – הכל עניין של ניהול המרחב."
+                summary: "הידעתם? בעיות תנועה וקונפליקטים בצמתים נוצרים גם כשיש מעט מאוד כלי רכב – הכל עניין של ניהול המרחב."
             },
             { 
                 id: 'q2', 
@@ -81,7 +80,7 @@
                     { id: 'c', text: "ג. נהגים התחילו לנסוע לאחור מרוב פחד ובלבול", correct: false },
                     { id: 'd', text: "ד. הולכי הרגל נבהלו ונשארו בבתים", correct: false }
                 ],
-                summary: "הפסיכולוגיה של הנהג בשילוב תכנון נכון של המרחב הציבורי (כמו למשל, \"רחוב הולנדי\" משולב) משפיעה על התנהגות אנושית ובטיחות."
+                summary: "הידעתם? הבנת הפסיכולוגיה של הנהג ואיך תכנון המרחב הציבורי (\"רחוב הולנדי\" משולב) משפיע על התנהגות אנושית ובטיחות."
             },
             { 
                 id: 'q3', 
@@ -92,7 +91,7 @@
                     { id: 'c', text: "ג. כדי לעזור לשוטרים להישאר יבשים ולא לעמוד בגשם", correct: false },
                     { id: 'd', text: "ד. כדי להפחית את זיהום האוויר שגרמו הסוסים בלונדון", correct: false }
                 ],
-                summary: "המטרה המקורית של הרמזור הייתה הגנה על הולכי רגל, אך בתכנון תנועת הרק\"ל, מטרת הרמזור היא לתת עדיפות מוחלטת לתחבורה עתירת נוסעים על פני רכבים פרטיים."
+                summary: "הידעתם? המטרה המקורית של הרמזור הייתה הגנה על הולכי רגל. בפרקטיקה של מהנדסי תנועה היה נהוג לבחון את קיבלות הרכבים, כיום מסתכלים הרבה יותר על הולכי הרגל וברק\"ל המטרה היא לתת עדיפות מוחלטת לתחבורה עתירת נוסעים על פני רכבים פרטיים"
             },
             { 
                 id: 'q4', 
@@ -103,117 +102,117 @@
                     { id: 'c', text: "ג. סינגפור ויפן", correct: false },
                     { id: 'd', text: "ד. שווייץ ונורווגיה", correct: false }
                 ],
-                summary: "בארץ לא תקבלו דו\"ח על רכב מלוכלך, אבל אם הבוץ יכסה את לוחית הזיהוי שלכם – השוטרים יקנסו אתכם ב-500 ש\"ח (ומצלמות האכיפה בנת\"צים של הרק\"ל פשוט לא יוכלו לשלוח לכם את הדו\"ח החגיגי...)"
+                summary: "הידעתם? בארץ לא תקבלו דו\"ח על רכב מלוכלך, אבל אם הבוץ יכסה את לוחית הזיהוי שלכם – השוטרים יקנסו אתכם ב-500 ש\"ח (ומצלמות האכיפה בנת\"צים של הרק\"ל פשוט לא יוכלו לשלוח לכם את הדו\"ח החגיגי...)"
             },
             { 
                 id: 'q5', 
                 question: "מה ההבדל בין לחצני הרמזור של הולכי הרגל בישראל לעומת ערים כמו ניו יורק או לונדון?", 
                 options: [
-                    { id: 'a', text: "א. בניו יורק הם עובדים ובארץ הם סתם קופסאות פלסטיק ליופי", correct: false },
-                    { id: 'b', text: "ב. בארץ הם לרוב פעילים ומזמינים/מאריכים את האור הירוק להולכי רגל, בעוד שבניו יורק מעל 90% מהם מנותקים והם \"לחצני פלצבו\" פסיכולוגיים בלבד", correct: true },
-                    { id: 'c', text: "ג. אין הבדל, בשני המקומות הם מחוברים ישירות למערכת הניווט של המטרו", correct: false },
-                    { id: 'd', text: "ד. בארץ הלחצן משחרר זרם חשמלי קל למי שלוחץ עליו יותר מ-3 פעמים ברצף", correct: false }
+                    { id: 'a', text: "א. בניו יורק הם עובדים ובארץ הם סתם קופסאות פלסטיק ליופי.", correct: false },
+                    { id: 'b', text: "ב. בארץ הם לרוב פעילים ומזמינים/מאריכים את האור הירוק להולכי רגל, בעוד שבניו יורק מעל 90% מהם מנותקים והם \"לחצני פלצבו\" פסיכולוגיים בלבד.", correct: true },
+                    { id: 'c', text: "ג. אין הבדל, בשני המקומות הם מחוברים ישירות למערכת הניווט של המטרו.", correct: false },
+                    { id: 'd', text: "ד. בארץ הלחצן משחרר זרםחשמלי קל למי שלוחץ עליו יותר מ-3 פעמים ברצף.", correct: false }
                 ],
-                summary: "זהו ההבדל בין מערכות תנועה מתוזמנות מרכזית (זמן קבוע/גל ירוק) לבין מערכות תנועה תלויות ביקוש (מערכות אדפטיביות וחיישנים)."
+                summary: "הידעתם? זהו ההבדל בין מערכות תנועה מתוזמנות מרכזית (זמן קבוע/גל ירוק) לבין מערכות תנועה תלויות ביקוש (מערכות אדפטיביות וחיישנים)."
             },
             { 
                 id: 'q6', 
                 question: "באיזו מדינה אסור על פי חוק לעצור בשולי הכביש המהיר, אפילו אם נגמר לכם הדלק?", 
                 options: [
                     { id: 'a', text: "א. באוטובאן בגרמניה", correct: true },
-                    { id: 'b', text: "ב. באוטוסטרדות של איטליה", correct: false },
-                    { id: 'c', text: "ג. בכביש 6 בישראל", correct: false },
-                    { id: 'd', text: "ד. בטקסס, ארה\"ב", correct: false }
+                    { id: 'b', text: "ב. באוטוסטרדות של איטליה.", correct: false },
+                    { id: 'c', text: "ג. בכביש 6 בישראל.", correct: false },
+                    { id: 'd', text: "ד. בטקסס, ארה\"ב.", correct: false }
                 ],
-                summary: "גם בישראל תקנות התעבורה (תקנה 69) אוסרות על עצירה בשול כביש מהיר אלא במקרה חירום. בפסיקה בארץ נקבע שרכב שנתקע בלי דלק אינו נחשב \"כוח עליון או תקלה פתאומית\" אלא רשלנות, והעצירה בשול מסכנת חיים ומפריעה לזרימת התנועה."
+                summary: "הידעתם? גם בישראל תקנות התעבורה (תקנה 69) אוסרות על עצירה בשול כביש מהיר אלא במקרה חירום. בפסיקה בארץ נקבע שרכב שנתקע בלי דלק אינו נחשב \"כוח עליון או תקלה פתאומית\" אלא רשלנות, והעצירה בשול מסכנת חיים ומפריעה לזרימת התנועה."
             },
             { 
                 id: 'q7', 
                 question: "מהי \"תופעת הפנטום\" (Phantom Traffic Jam) שנלמדת בהנדסת תנועה?", 
                 options: [
-                    { id: 'a', text: "א. פקק שנוצר בלילה רק בגלל צללים של גשרים ותאורת רחוב", correct: false },
+                    { id: 'a', text: "א. פקק שנוצר בלילה רק בגלל צללים של גשרים ותאורת רחוב.", correct: false },
                     { id: 'b', text: "ב. פקק שנוצר משום מקום בכביש מהיר, לרוב בגלל נהג אחד שלחץ חזק מדי על הבלמים וגרם לגל בלימה שמתגלגל לאחור", correct: true },
-                    { id: 'c', text: "ג. אשליית ראייה שגורמת לכביש פנוי להיראות עמוס", correct: false },
-                    { id: 'd', text: "ד. כינוי לפקקים שנגרמים בארץ בגלל תקלות תוכנה בוויז", correct: false }
+                    { id: 'c', text: "ג. אשליית ראייה שגורמת לכביש פנוי להיראות עמוס.", correct: false },
+                    { id: 'd', text: "ד. כינוי לפקקים שנגרמים בארץ בגלל תקלות תוכנה בוויז.", correct: false }
                 ],
-                summary: "זו הסיבה לכך שלעיתים אתם תקועים בפקק שכאשר אתם מגיעים לסופו הוא משתחרר מבלי שראיתם תאונה או עבודות בדרך – פשוט הייתם בקצה של גל בלימה."
+                summary: "הידעתם? זו הסיבה לכך שלעיתים אתם תקועים בפקק ארוך שכאשר אתם מגיעים לסופו והוא משתחרר אתם לא רואים שום תאונה או עבודות בדרך שגרמו לכך שעמדתם זמן ארוך קודם. – פשוט הייתם בקצה של גל בלימה."
             },
             { 
                 id: 'q8', 
                 question: "על פי מחקרים כמה זמן מחייו מבלה נהג ממוצע בציפייה שהרמזור האדום יתחלף לירוק?", 
                 options: [
-                    { id: 'a', text: "א. בערך שבועיים", correct: false },
+                    { id: 'a', text: "א. בערך שבועיים.", correct: false },
                     { id: 'b', text: "ב. חודשיים – ארבעה חודשים", correct: true },
-                    { id: 'c', text: "ג. שנתיים מהחיים", correct: false },
-                    { id: 'd', text: "ד. חודש אחד בלבד (אבל זה מרגיש כמו נצח)", correct: false }
+                    { id: 'c', text: "ג. שנתיים מהחיים.", correct: false },
+                    { id: 'd', text: "ד. חודש אחד בלבד (אבל זה מרגיש כמו נצח).", correct: false }
                 ],
-                summary: "אחת הסיבות שבגללה מנהלי פרויקטים צריכים להאיץ את בניית המטרו והרק\"ל – היא כדי להחזיר לאנשים את הזמן האבוד שלהם."
+                summary: "הידעתם? הסיבה הטובה שבגללה מנהלי פרויקטים צריכים להאיץ את בניית המטרו והרק\"ל – להחזיר לאנשים את הזמן האבוד שלהם."
             },
             { 
                 id: 'q9', 
                 question: "מבחינה הנדסית, מהו היתרון המרכזי של מעגלי תנועה (כיכרות) על פני צמתים מרומזרים?", 
                 options: [
-                    { id: 'a', text: "א. הן מגדילות את קיבולת כלי הרכב בצומת עמוס בצורה דרמטית", correct: false },
-                    { id: 'b', text: "ב. הן משפרות באופן מובהק את הבטיחות על ידי הפחתת מהירות הנסיעה וצמצום נקודות הסכסוך בצומת (מ-32 ל-8)", correct: true },
-                    { id: 'c', text: "ג. הן תופסות פחות שטח עירוני יקר לעומת צומת רגיל", correct: false },
-                    { id: 'd', text: "ד. הן נראות יפות יותר לתושבים בצילומי רחפן", correct: false }
+                    { id: 'a', text: "א. הן מגדילות את קיבולת כלי הרכב בצומת עמוס בצורה דרמטית.", correct: false },
+                    { id: 'b', text: "ב. הן משפרות באופן מובהק את הבטיחות על ידי הפחתת מהירות הנסיעה וצמצום נקודות הסכסוך בצומת (מ-32 ל-8).", correct: true },
+                    { id: 'c', text: "ג. הן תופסות פחות שטח עירוני יקר לעומת צומת רגיל.", correct: false },
+                    { id: 'd', text: "ד. הן נראות יפות יותר לתושבים בצילומי רחפן.", correct: false }
                 ],
-                summary: "זהו ההבדל בין בטיחות (שבו הכיכר מנצחת) לבין קיבולת וזרימת נפחים קיצונית (שם רמזור חכם או הפרדה מפלסית כמו רכבת תחתית הם הפתרון)."
+                summary: "הידעתם? זהו ההבדל בין בטיחות (שבו הכיכר מנצחת) לבין קיבולת וזרימת נפחים קיצונית (שם רמזור חכם או הפרדה מפלסית כמו רכבת תחתית הם הפתרון)."
             },
             { 
                 id: 'q10', 
                 question: "ניסויים ומודלים מראים כי כדי להשיג את \"הקיבולת המקסימלית\" (נפח כלי הרכב הגבוה ביותר שעובר בכביש בשעה), מהי המהירות האופטימלית שבה השיירה צריכה לנסוע?", 
                 options: [
-                    { id: 'a', text: "א. מהירות גבוהה ככל הניתן (110–120 קמ\"ש)", correct: false },
-                    { id: 'b', text: "ב. מהירות קבועה ורציפה של כ-60–70 קמ\"ש", correct: true },
-                    { id: 'c', text: "ג. נסיעה איטית מאוד של 20 קמ\"ש (כדי שלא יהיו רווחים בין המכוניות)", correct: false },
-                    { id: 'd', text: "ד. המהירות לא משנה, רק סוג הרכבים משפיע על הקיבולת", correct: false }
+                    { id: 'a', text: "א. מהירות גבוהה ככל הניתן (110–120 קמ\"ש).", correct: false },
+                    { id: 'b', text: "ב. מהירות קבועה ורציפה של כ-60–70 קמ\"ש.", correct: true },
+                    { id: 'c', text: "ג. נסיעה איטית מאוד של 20 קמ\"ש (כדי שלא יהיו רווחים בין המכוניות).", correct: false },
+                    { id: 'd', text: "ד. המהירות לא משנה, רק סוג הרכבים משפיע על הקיבולת.", correct: false }
                 ],
-                summary: "פרדוקס זרימת התנועה (מודל חילוף החומרים/גרף הקיבולת) – מהירות גבוהה מדי דורשת מרחקי בטיחות ענקיים בין המכוניות ומורידה את קיבולת הכביש, בעוד שמהירות מתונה ואחידה מייצרת את הזרימה המושלמת."
+                summary: "הידעתם? פרדוקס זרימת התנועה (מודל חילוף החומרים/גרף הקיבולת) – מהירות גבוהה מדי דורשת מרחקי בטיחות ענקיים בין המכוניות ומורידה את קיבולת הכביש, בעוד שמהירות מתונה ואחידה מייצרת את הזרימה המושלמת."
             },
             { 
                 id: 'q11', 
                 question: "לפי \"פרדוקס ברס\" (Braess's paradox) המפורסם בהנדסת תנועה, מה קורה לרשת כבישים קיימת אם מוסיפים לה כביש חדש לגמרי לרכבים פרטיים?", 
                 options: [
-                    { id: 'a', text: "א. זמני הנסיעה של כל הנהגים ברשת עלולים דווקא להתארך בגלל שינוי לרעה בחלוקת זרמי התנועה האנוכיים", correct: true },
-                    { id: 'b', text: "ב. הפקקים נעלמים באופן אוטומטי ותמידי", correct: false },
-                    { id: 'c', text: "ג. אנשים מפסיקים להשתמש בתוכנות ניווט ועוברים למפות נייר", correct: false },
-                    { id: 'd', text: "ד. התחבורה הציבורית באזור הופכת ליעילה יותר", correct: false }
+                    { id: 'a', text: "א. זמני הנסיעה של כל הנהגים ברשת עלולים דווקא להתארך בגלל שינוי לרעה בחלוקת זרמי התנועה האנוכיים.", correct: true },
+                    { id: 'b', text: "ב. הפקקים נעלמים באופן אוטומטי ותמידי.", correct: false },
+                    { id: 'c', text: "ג. אנשים מפסיקים להשתמש בתוכנות ניווט ועוברים למפות נייר.", correct: false },
+                    { id: 'd', text: "ד. התחבורה הציבורית באזור הופכת ליעילה יותר.", correct: false }
                 ],
-                summary: "הוכחה מתמטית (מעבר לתופעת \"הביקוש המושרה\") לכך שלא פותרים פקקים על ידי הוספת עוד ועוד נתיבים לרכב פרטי."
+                summary: "הידעתם? הוכחה מתמטית (מעבר לתופעת \"הביקוש המושרה\") לכך שלא פותרים פקקים על ידי הוספת עוד עוד נתיבים לרכב פרטי."
             },
             { 
                 id: 'q12', 
                 question: "מה מסמלים הצבעים של שלטי ההכוונה (השילוט) בדרכים הבין-עירוניות בישראל?", 
                 options: [
-                    { id: 'a', text: "א. ירוק = כביש מהיר, כחול = כביש ראשי רגיל, חום = אתר תיירות/לאומי", correct: false },
+                    { id: 'a', text: "א. ירוק = כביש מהיר, כחול = כביש ראשי רגיל, חום = אתר תיירות/לאומי.", correct: false },
                     { id: 'b', text: "ב. כחול = כביש מהיר (כמו כביש 1 או 6), ירוק = כביש ראשי/בין-עירוני רגיל, חום = אתר תיירות או גן לאומי", correct: true },
-                    { id: 'c', text: "ג. אין לזה משמעות הנדסית, נתיבי ישראל בחרו צבעים לפי מה שהיה במלאי באותו יום", correct: false },
-                    { id: 'd', text: "ד. הצבעים נקבעו לפי רמת הקליטה של הרדיו באותו אזור", correct: false }
+                    { id: 'c', text: "ג. אין לזה משמעות הנדסית, נתיבי ישראל בחרו צבעים לפי מה שהיה במלאי באותו יום.", correct: false },
+                    { id: 'd', text: "ד. הצבעים נקבעו לפי רמת הקליטה של הרדיו באותו אזור.", correct: false }
                 ],
-                summary: "חשיבות האחידות הוויזואלית והנדסת אנוש בשילוט ותמרור (העברת מידע קריטי לנהג בשבריר שנייה ללא צורך בקריאת טקסט ארוך)."
+                summary: "הידעתם? חשיבות האחידות הוויזואלית והנדסת אנוש בשילוט ותמרור (העברת מידע קריטי לנהג בשבריר שנייה ללא צורך בקריאת טקסט ארוך)."
             },
             { 
                 id: 'q13', 
                 question: "מדוע שלטים בכבישים מהירים כתובים באותיות קטנות וגדולות (באנגלית/עברית עם ניקוד) ולא רק באותיות דפוס גדולות (BLOCK LETTERS)?", 
                 options: [
-                    { id: 'a', text: "א. המוח האנושי מזהה את \"צורת המילה\" הכללית (הודות לאותיות עולות ויורדות) מהר יותר מאשר קריאת אות-אות", correct: true },
-                    { id: 'b', text: "ב. זה פשוט חוסך כסף על צבע מחזיר אור בשלטים", correct: false },
-                    { id: 'c', text: "ג. כדי שהשלט ייראה פחות מאיים ויותר ידידותי לנהגים מבוהלים", correct: false },
-                    { id: 'd', text: "ד. זו פשוט העתקה של השילוט הבריטי מתקופת המנדט שאף אחד לא טרח לשנות", correct: false }
+                    { id: 'a', text: "א. המוח האנושי מזהה את \"צורת המילה\" הכללית (הודות לאותיות עולות ויורדות) מהר יותר מאשר קריאת אות-אות.", correct: true },
+                    { id: 'b', text: "ב. זה פשוט חוסך כסף על צבע מחזיר אור בשלטים.", correct: false },
+                    { id: 'c', text: "ג. כדי שהשלט ייראה פחות מאיים ויותר ידידותי לנהגים מבוהלים.", correct: false },
+                    { id: 'd', text: "ד. זו פשוט העתקה של השילוט הבריטי מתקופת המנדט שאף אחד לא טרח לשנות.", correct: false }
                 ],
-                summary: "כללי התעתיק בין עברית לאנגלית הם כללים שמוכתבים על ידי האקדמיה ללשון העברית. באתר משרד התחבורה יש מסמך עם תעתיק של כל הישובים והשמות שיש לכתוב בשילוט עם תעתיק לאנגלית וערבית."
+                summary: "הידעתם? כללי התעתיק בין עברית לאנגלית הם כלללים שמוכתבים על ידי האקדמיה ללשון העברית. באתר משרד התחבורה יש מסמך עם תעתיק של כל הישובים והשמות שיש לכתוב בשילוט עם תעתיק לאנגלית וערבית."
             },
             { 
                 id: 'q14', 
                 question: "מה היה הגורם המפתיע לפקק התנועה הארוך ביותר בהיסטוריה (שנמשך 9 ימים בכביש הכניסה לבייג'ינג)?", 
                 options: [
-                    { id: 'a', text: "א. עדר עצום של כבשים וגמלים שחצה את האוטוסטרדה", correct: false },
+                    { id: 'a', text: "א. עדר עצום של כבשים וגמלים שחצה את האוטוסטרדה.", correct: false },
                     { id: 'b', text: "ב. עבודות שדרוג בכביש – בשילוב עם מאות משאיות כבדות שהובילו חומרי בנייה לאותן עבודות בדיוק ונתקעו בעצמן", correct: true },
-                    { id: 'c', text: "ג. נהג אחד שנרדם ברמזור והפעיל אפקט דומינו של 100 קילומטרים", correct: false },
-                    { id: 'd', text: "ד. השקה של אייפון חדש שגרמה לאנשים לעצור בצד הדרך", correct: false }
+                    { id: 'c', text: "ג. נהג אחד שנרדם ברמזור והפעיל אפקט דומינו של 100 קילומטרים.", correct: false },
+                    { id: 'd', text: "ד. השקה של אייפון חדש שגרמה לאנשים לעצור בצד הדרך.", correct: false }
                 ],
-                summary: "הפקק היה באוגוסט 2010 והוא גרם לסוחרים מקומיים לנצל את הנהגים שהיו תקועים בפקק ולמכור להם מים ומזון במחירים מופקעים.",
+                summary: "הידעתם? הפקק היה באוגוסט 2010 והוא גרם לסוחרים מקומיים לנצל את הנהגים שהיו תקועים בפקק ולמכור להם מים ומזון במחירים מופקעים.",
                 image: "traffic.jpg"
             }
         ];
@@ -256,7 +255,7 @@
                         <circle cx="30" cy="30" r={radius} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="5" />
                         <circle cx="30" cy="30" r={radius} fill="none" stroke={isDanger ? "#ef4444" : "#3b82f6"} strokeWidth="5" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" />
                     </svg>
-                    <span className="text-xl font-black text-blue-300">{timeLeft}</span>
+                    <span className={`text-xl font-black ${isDanger ? 'text-red-400 animate-ping' : 'text-blue-300'}`}>{timeLeft}</span>
                 </div>
             );
         };
@@ -289,9 +288,7 @@
                     if (s.exists) {
                         setDynamicQuestions(s.data().list); 
                     } else {
-                        // אם החדר קיים אך ריק - נזריק אוטומטית את 14 השאלות המלאות
                         path.collection('config').doc('questions').set({ list: DEFAULT_QUESTIONS });
-                        setDynamicQuestions(DEFAULT_QUESTIONS);
                     }
                 });
                 
@@ -315,7 +312,7 @@
                 setSelectedOption(null);
             }, [gameState.questionIndex, gameState.step]);
 
-            // Timer Logic קבוע ותקין ללא שגיאות כתיב
+            // Timer Logic
             useEffect(() => {
                 let interval;
                 if (gameState.step === 'question' && gameState.startedAt) {
@@ -351,7 +348,7 @@
                 
                 setSelectedOption(optId);
                 const q = dynamicQuestions[gameState.questionIndex];
-                const isCorrect = q?.options?.find(o => o.id === optId)?.correct || false;
+                const isCorrect = q.options.find(o => o.id === optId)?.correct || false;
 
                 if (isCorrect) {
                     const speedBonus = Math.floor((timeLeft / 30) * 50);
@@ -361,13 +358,15 @@
                 }
 
                 await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('answers').add({
-                    playerId: user.uid, playerName, questionId: q?.id || 'unknown', answerId: optId, isCorrect, timestamp: Date.now()
+                    playerId: user.uid, playerName, questionId: q.id, answerId: optId, isCorrect, timestamp: Date.now()
                 });
             };
 
             const updateGameState = async (newState) => {
                 const updatePayload = { ...newState };
-                if (newState.step === 'question') updatePayload.startedAt = Date.now();
+                if (newState.step === 'question') {
+                    updatePayload.startedAt = Date.now();
+                }
                 await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('config').doc('state').set({...gameState, ...updatePayload}, { merge: true });
             };
 
@@ -401,7 +400,7 @@
                         { id: 'a', text: "תשובה 1", correct: true }, { id: 'b', text: "תשובה 2", correct: false },
                         { id: 'c', text: "תשובה 3", correct: false }, { id: 'd', text: "תשובה 4", correct: false }
                     ],
-                    summary: "לסיכום:"
+                    summary: "משפט מסכם לשאלה."
                 };
                 setDynamicQuestions([...dynamicQuestions, newQ]);
             };
@@ -434,7 +433,7 @@
 
             const leaderboard = useMemo(() => [...players].sort((a,b) => (b.score||0)-(a.score||0)).slice(0, 5), [players]);
             const currentPlayer = players.find(p => p.id === user?.uid);
-            const currentQ = dynamicQuestions && dynamicQuestions[gameState.questionIndex] ? dynamicQuestions[gameState.questionIndex] : null;
+            const currentQ = dynamicQuestions[gameState.questionIndex];
             const currentAnswers = answers.filter(a => a.questionId === currentQ?.id);
 
             // ==========================================
@@ -446,12 +445,12 @@
                         <div className="flex flex-col items-center justify-center min-h-screen p-4 w-full max-w-md mx-auto animate-slide">
                             <div className="text-center mb-8">
                                 <IconMetro />
-                                <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-l from-blue-400 to-indigo-400 drop-shadow-lg leading-tight px-4">ברוכים הבאים לחידון הפתיחה של קורס הנדסת תנועה ותחבורה</h1>
+                                <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-l from-blue-400 to-indigo-400 drop-shadow-lg">ברוכים הבאים לחידון</h1>
                             </div>
                             <div className="glass-panel-light p-8 rounded-[2rem] w-full text-center shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
                                 <h2 className="text-xl font-bold mb-6 text-blue-200">הכנס שם להצטרפות למשחק</h2>
                                 <input type="text" className="w-full p-4 rounded-xl bg-slate-900/60 border border-blue-500/30 mb-6 text-center text-2xl font-black text-white outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50 transition-all" placeholder="איך קוראים לך?" value={playerName} onChange={e => setPlayerName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleJoin()} />
-                                <button onClick={handleJoin} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white py-4 rounded-xl font-black text-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.4)]">הצטרפות</button>
+                                <button onClick={handleJoin} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white py-4 rounded-xl font-black text-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] hover:-translate-y-1">הצטרפות</button>
                             </div>
                             <button onClick={() => { const p = prompt("סיסמת מנהל:"); if(p === '12345') setIsAdmin(true); }} className="mt-12 text-slate-500 hover:text-blue-400 text-sm font-bold transition-all">⚙️ כניסת מנהל</button>
                         </div>
@@ -460,10 +459,15 @@
 
                 if (gameState.step === 'login' || gameState.step === 'lobby') {
                     return (
-                        <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
-                            <div className="glass-panel-light p-10 rounded-[3rem] shadow-2xl max-w-md w-full">
-                                <h2 className="text-4xl font-black mb-4">היי {currentPlayer.name}! 👋</h2>
-                                <p className="text-2xl font-bold text-blue-300">עוד כמה רגעים מתחילים...</p>
+                        <div className="flex flex-col items-center justify-center min-h-screen p-4 animate-slide text-center overflow-y-auto">
+                            <div className="glass-panel-light p-10 rounded-[3rem] shadow-2xl max-w-md w-full border-t-4 border-t-blue-500">
+                                <h2 className="text-4xl font-black mb-4 text-transparent bg-clip-text bg-gradient-to-br from-white to-blue-200">היי {currentPlayer.name}! 👋</h2>
+                                <p className="text-2xl font-bold text-blue-300 mb-8 drop-shadow-md">עוד כמה רגעים מתחילים...</p>
+                                <div className="flex justify-center space-x-3 space-x-reverse">
+                                    <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                                    <div className="w-4 h-4 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></div>
+                                    <div className="w-4 h-4 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></div>
+                                </div>
                             </div>
                         </div>
                     );
@@ -475,7 +479,7 @@
                         <div className="flex flex-col items-center min-h-screen p-4 w-full max-w-2xl mx-auto pt-6 animate-slide overflow-y-auto">
                             <div className="w-full flex justify-between items-center mb-2">
                                 <span className="bg-slate-800/80 px-4 py-1 rounded-full text-sm font-bold text-blue-300 border border-slate-700">שאלה {gameState.questionIndex + 1} / {dynamicQuestions.length}</span>
-                                <span className="font-black text-lg bg-blue-900/50 px-4 py-1 rounded-full border border-blue-700/50">⭐ {currentPlayer.score} נק'</span>
+                                <span className="font-black text-lg bg-blue-900/50 px-4 py-1 rounded-full text-blue-200 border border-blue-700/50">⭐ {currentPlayer.score} נק'</span>
                             </div>
                             
                             <div className="flex justify-center w-full">
@@ -487,7 +491,7 @@
                             </div>
 
                             <div className="grid grid-cols-1 gap-3 w-full pb-8">
-                                {currentQ.options && currentQ.options.map(opt => {
+                                {currentQ.options.map(opt => {
                                     const isSelected = selectedOption === opt.id;
                                     
                                     let btnClasses = "p-4 md:p-5 rounded-2xl border-2 transition-all w-full relative ";
@@ -514,6 +518,12 @@
                                     );
                                 })}
                             </div>
+                            
+                            {selectedOption !== null && (
+                                <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[90%] max-w-sm text-blue-300 font-bold animate-pulse text-center bg-blue-900/90 px-6 py-3 rounded-full border border-blue-500/50 backdrop-blur">
+                                    התשובה נקלטה! ממתינים לכולם...
+                                </div>
+                            )}
                         </div>
                     );
                 }
@@ -521,19 +531,29 @@
                 if (gameState.step === 'results' && currentQ) {
                     const myAnswerDoc = answers.find(a => a.playerId === user.uid && a.questionId === currentQ.id);
                     const isCorrect = myAnswerDoc?.isCorrect;
-                    const correctOpt = currentQ.options && currentQ.options.find(o => o.correct);
+                    const correctOpt = currentQ.options.find(o => o.correct);
 
                     return (
-                        <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
+                        <div className="flex flex-col items-center justify-center min-h-screen p-4 animate-pop text-center overflow-y-auto">
                             <div className={`glass-panel p-10 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-md border-2 relative overflow-hidden ${isCorrect ? 'border-green-500 bg-gradient-to-b from-green-900/40 to-slate-900/80' : 'border-red-500 bg-gradient-to-b from-red-900/40 to-slate-900/80'}`}>
+                                
                                 {isCorrect ? <IconCheck /> : <IconCross />}
-                                <h2 className={`text-4xl md:text-5xl font-black mb-4 ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>{isCorrect ? "נכון מאוד!" : "טעות..."}</h2>
+                                
+                                <h2 className={`text-4xl md:text-5xl font-black mb-4 drop-shadow-lg ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>
+                                    {isCorrect ? "נכון מאוד!" : "טעות..."}
+                                </h2>
+                                
                                 {!isCorrect && correctOpt && (
                                     <div className="mt-6 bg-slate-900/80 p-5 rounded-2xl border border-slate-700 text-right shadow-inner">
-                                        <p className="text-xs text-red-300 font-bold mb-2 uppercase tracking-wide">התשובה הנכונה:</p>
-                                        <p className="font-bold text-white text-sm md:text-base">{correctOpt.text}</p>
+                                        <p className="text-xs md:text-sm text-red-300 font-bold mb-2 uppercase tracking-wide">התשובה הנכונה:</p>
+                                        <p className="font-bold text-white text-base md:text-lg">{correctOpt.text}</p>
                                     </div>
                                 )}
+                                
+                                <div className="mt-8 pt-6 border-t border-white/10">
+                                    <p className="text-xs md:text-sm text-slate-400 mb-1 font-bold uppercase tracking-wider">סך הכל ניקוד</p>
+                                    <p className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">{currentPlayer.score}</p>
+                                </div>
                             </div>
                         </div>
                     );
@@ -544,56 +564,65 @@
                     const isLastQuestion = gameState.questionIndex >= dynamicQuestions.length - 1;
 
                     return (
-                        <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center overflow-y-auto">
+                        <div className="flex flex-col items-center justify-center min-h-screen p-4 animate-slide text-center overflow-y-auto">
                             <div className="glass-panel p-10 rounded-[3rem] shadow-[0_0_50px_rgba(234,179,8,0.2)] max-w-md w-full border-2 border-yellow-500/50 bg-gradient-to-b from-yellow-900/20 to-slate-900">
-                                <div className="text-6xl mb-6">🏆</div>
+                                <div className="text-6xl md:text-7xl mb-6 drop-shadow-2xl">🏆</div>
                                 <h2 className="text-2xl md:text-3xl font-black mb-4 text-white">הבט במסך המרכזי!</h2>
-                                <p className="text-lg text-slate-300 mb-6">המיקום שלך כרגע: <strong className="text-yellow-400 text-3xl block mt-2">#{myRank}</strong></p>
+                                <p className="text-lg md:text-xl text-slate-300 mb-6">המיקום שלך כרגע: <strong className="text-yellow-400 text-3xl md:text-4xl block mt-2 drop-shadow-md">#{myRank}</strong></p>
+                                
                                 {isLastQuestion ? (
-                                    <div className="text-sm text-green-300 font-black bg-green-900/40 p-4 rounded-xl border border-green-500/30">כל הכבוד! סיום המשחק 🎉</div>
+                                    <div className="text-sm md:text-md text-green-300 font-black bg-green-900/40 p-4 rounded-xl border border-green-500/30">
+                                        כל הכבוד! סיום המשחק 🎉
+                                    </div>
                                 ) : (
-                                    <div className="text-sm text-blue-200 font-bold bg-blue-900/40 p-4 rounded-xl border border-blue-500/30 animate-pulse">הכן את עצמך לשאלה הבאה...</div>
+                                    <div className="text-sm md:text-md text-blue-200 font-bold bg-blue-900/40 p-4 rounded-xl border border-blue-500/30 animate-pulse">
+                                        הכן את עצמך לשאלה הבאה...
+                                    </div>
                                 )}
                             </div>
                         </div>
                     );
                 }
+
                 return null;
             }
 
             // ==========================================
-            // ADMIN VIEW
+            // ADMIN VIEW (FULLSCREEN PRESENTATION)
             // ==========================================
             if (adminTab === 'game') {
                 return (
-                    <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex flex-col items-center overflow-hidden pb-24">
+                    <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 flex flex-col items-center overflow-hidden pb-24">
+                        
                         <div className="w-full h-full max-w-6xl px-4 md:px-8 flex flex-col justify-between relative pt-4 pb-6 mx-auto">
                             
                             {gameState.step === 'lobby' && (
-                                <div className="text-center h-full flex flex-col items-center justify-center">
+                                <div className="text-center animate-slide h-full flex flex-col items-center justify-center">
                                     <IconMetro />
-                                    <h1 className="text-4xl md:text-6xl font-black mb-6 text-transparent bg-clip-text bg-gradient-to-b from-white to-blue-300 max-w-4xl mx-auto leading-tight">ברוכים הבאים לחידון הפתיחה של קורס הנדסת תנועה ותחבורה</h1>
-                                    <div className="text-2xl font-bold text-blue-300 mb-10 bg-blue-900/30 px-8 py-3 rounded-full border border-blue-500/30 shadow-lg">ממתינים לשחקנים... ({players.length})</div>
-                                    <div className="flex flex-wrap gap-3 justify-center">
-                                        {players.map(p => <span key={p.id} className="bg-slate-800/80 px-5 py-2 rounded-full font-black border-2 border-slate-600 shadow-xl">{p.name}</span>)}
+                                    <h1 className="text-5xl md:text-7xl font-black mb-6 text-transparent bg-clip-text bg-gradient-to-b from-white to-blue-300 drop-shadow-2xl">ברוכים הבאים לחידון!</h1>
+                                    <div className="text-2xl md:text-3xl font-bold text-blue-300 mb-10 bg-blue-900/30 inline-block px-8 py-3 rounded-full border border-blue-500/30 shadow-lg">ממתינים לשחקנים... ({players.length})</div>
+                                    <div className="flex flex-wrap gap-3 justify-center max-w-4xl mx-auto w-full px-2">
+                                        {players.map(p => <span key={p.id} className="bg-slate-800/80 backdrop-blur px-5 py-2 rounded-full font-black text-lg md:text-xl border-2 border-slate-600 shadow-xl">{p.name}</span>)}
                                     </div>
                                 </div>
                             )}
 
                             {gameState.step === 'question' && currentQ && (
-                                <div className="flex flex-col h-full w-full justify-center flex-1">
+                                <div className="flex flex-col h-full w-full animate-slide justify-center flex-1">
                                     <div className="flex justify-between items-center mb-4 shrink-0">
                                         <span className="text-blue-400 font-black text-xl md:text-2xl bg-blue-900/30 px-5 py-2 rounded-2xl border border-blue-500/30">שאלה {gameState.questionIndex + 1}</span>
                                         <Timer timeLeft={timeLeft} maxTime={30} />
                                         <span className="text-slate-400 font-bold text-lg md:text-xl bg-slate-800/50 px-5 py-2 rounded-2xl border border-slate-600">ענו: <strong className="text-white">{currentAnswers.length} / {players.length}</strong></span>
                                     </div>
-                                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-black mb-6 leading-tight text-center drop-shadow-xl">{currentQ.question}</h2>
-                                    <div className="grid grid-cols-2 gap-4 w-full shrink-0">
-                                        {currentQ.options && currentQ.options.map((opt) => (
-                                            <div key={opt.id} className="bg-slate-800/60 backdrop-blur-md p-4 md:p-6 rounded-2xl md:rounded-3xl border-2 border-slate-600 text-lg md:text-xl lg:text-2xl leading-snug font-bold text-center flex items-center justify-center min-h-[90px] shadow-2xl">
-                                                {opt.text}
-                                            </div>
-                                        ))}
+                                    <div className="flex-1 flex flex-col justify-center min-h-0">
+                                        <h2 className="text-3xl md:text-4xl lg:text-5xl font-black mb-6 leading-tight text-center drop-shadow-xl shrink-0">{currentQ.question}</h2>
+                                        <div className="grid grid-cols-2 gap-4 w-full shrink-0">
+                                            {currentQ.options.map((opt, i) => (
+                                                <div key={opt.id} className="bg-slate-800/60 backdrop-blur-md p-4 md:p-6 rounded-2xl md:rounded-3xl border-2 border-slate-600 text-lg md:text-xl lg:text-2xl leading-snug font-bold text-center flex items-center justify-center min-h-[90px] shadow-2xl">
+                                                    {opt.text}
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -602,13 +631,15 @@
                                 <div className="flex flex-col w-full h-full animate-slide justify-between">
                                     <h2 className="text-2xl md:text-3xl font-black mb-2 text-center text-blue-300 uppercase tracking-widest shrink-0">תוצאות השאלה</h2>
                                     
+                                    {/* סידור עמודות: ה"וי" עבר לעמודה הימנית (הראשונה ב-RTL) */}
                                     <div className="space-y-2 md:space-y-3 flex-1 flex flex-col justify-center max-w-5xl mx-auto w-full min-h-0">
-                                        {currentQ.options && currentQ.options.map(opt => {
+                                        {currentQ.options.map(opt => {
                                             const count = currentAnswers.filter(a => a.answerId === opt.id).length;
                                             const pct = currentAnswers.length ? Math.round((count / currentAnswers.length) * 100) : 0;
                                             return (
                                                 <div key={opt.id} className="w-full grid grid-cols-[48px_1fr_48px] items-center gap-4 min-h-0">
                                                     
+                                                    {/* עמודה ימנית: סימון ה"וי" עבר לכאן כדי לקבל עדיפות קריאה מימין לשמאל */}
                                                     <div className="w-12 h-12 shrink-0 flex items-center justify-center">
                                                         {opt.correct && (
                                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="w-12 h-12 text-green-400 drop-shadow-[0_0_12px_rgba(74,222,128,0.9)] animate-pop">
@@ -617,12 +648,16 @@
                                                         )}
                                                     </div>
                                                     
+                                                    {/* עמודה מרכזית: תיבת התשובה הממורכזת לחלוטין */}
                                                     <div className={`flex-1 relative overflow-hidden rounded-xl md:rounded-2xl border-2 p-2.5 md:p-3.5 flex justify-between items-center z-10 shadow-xl min-h-0 ${opt.correct ? 'border-green-500 bg-green-900/40' : 'border-slate-700 bg-slate-800/60'}`}>
                                                         <div className="absolute top-0 right-0 h-full bg-gradient-to-l from-blue-600/30 to-indigo-600/30 -z-10 transition-all duration-1000" style={{ width: `${pct}%` }}></div>
-                                                        <span className="font-black text-base md:text-lg lg:text-xl leading-snug z-20 text-right pl-4">{opt.text}</span>
+                                                        <span className={`font-black text-base md:text-lg lg:text-xl leading-snug z-20 text-right pl-4 ${opt.correct ? 'text-green-300 drop-shadow-md' : 'text-slate-200'}`}>
+                                                            {opt.text}
+                                                        </span>
                                                         <span className="font-black text-xl md:text-2xl z-20 text-white drop-shadow-md shrink-0">{count} <span className="text-sm md:text-base text-slate-300">({pct}%)</span></span>
                                                     </div>
 
+                                                    {/* עמודה שמאלית: פלצבו ריק שמאזן את הפריסה ומבטיח שהמרכז יישאר במרכז העמוד */}
                                                     <div className="w-12 h-12 shrink-0"></div>
 
                                                 </div>
@@ -630,26 +665,27 @@
                                         })}
                                     </div>
 
+                                    {/* המשפט המסכם */}
                                     <div className="mt-3 shrink-0 bg-gradient-to-r from-blue-600/90 to-indigo-600/90 p-4 md:p-5 rounded-3xl border-2 border-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.6)] backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-6 w-full max-w-5xl mx-auto">
                                         <div className="flex-1 text-right">
-                                            <p className="text-blue-100 font-bold text-xs mb-1 uppercase">לסיכום:</p>
+                                            <p className="text-blue-100 font-bold text-xs md:text-sm mb-1 uppercase tracking-widest drop-shadow">משפט מסכם:</p>
                                             <p className="text-2xl md:text-3xl lg:text-4xl font-black text-white leading-tight drop-shadow-lg">{currentQ.summary}</p>
                                         </div>
                                         {currentQ.image && (
-                                            <img src={currentQ.image} alt="Traffic Illustration" className="w-1/4 max-w-[260px] h-24 md:h-32 object-cover rounded-xl border border-white/20 shadow-2xl shrink-0" />
+                                            <img src={currentQ.image} alt="Traffic Illustration" className="w-1/4 max-w-[260px] h-24 md:h-32 object-cover rounded-xl border border-white/20 shadow-2xl animate-pop shrink-0" />
                                         )}
                                     </div>
                                 </div>
                             )}
 
                             {gameState.step === 'leaderboard' && (
-                                <div className="flex flex-col items-center justify-center h-full w-full">
-                                    <h2 className="text-5xl md:text-6xl font-black mb-10 text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 to-yellow-500">🏆 המובילים 🏆</h2>
+                                <div className="flex flex-col items-center justify-center h-full animate-slide w-full">
+                                    <h2 className="text-5xl md:text-6xl font-black mb-10 text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 to-yellow-500 drop-shadow-[0_5px_15px_rgba(234,179,8,0.4)] shrink-0">🏆 המובילים 🏆</h2>
                                     <div className="w-full max-w-2xl space-y-4 flex-1 flex flex-col justify-center">
                                         {leaderboard.map((p, i) => (
-                                            <div key={p.id} className={`flex justify-between items-center p-4 rounded-2xl font-black text-2xl shadow-2xl ${i === 0 ? 'bg-gradient-to-r from-yellow-600/40 to-yellow-500/20 border-2 border-yellow-400 text-yellow-300 scale-105 shadow-[0_0_20px_rgba(234,179,8,0.4)]' : 'bg-slate-800/80 border border-slate-600 text-white'}`}>
+                                            <div key={p.id} className={`flex justify-between items-center p-4 md:p-5 rounded-2xl md:rounded-3xl font-black text-2xl md:text-3xl shadow-2xl ${i === 0 ? 'bg-gradient-to-r from-yellow-600/40 to-yellow-500/20 border-2 border-yellow-400 text-yellow-300 scale-105 shadow-[0_0_20px_rgba(234,179,8,0.4)] mb-4' : 'bg-slate-800/80 border border-slate-600 text-white'}`}>
                                                 <span>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)+'.'} {p.name}</span>
-                                                <span className="font-bold">{p.score} <span className="text-lg opacity-70">נק'</span></span>
+                                                <span className="font-bold">{p.score} <span className="text-lg md:text-xl opacity-70">נק'</span></span>
                                             </div>
                                         ))}
                                     </div>
@@ -657,62 +693,89 @@
                             )}
                         </div>
 
-                        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 glass-panel px-6 py-3 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex items-center gap-4 z-50 whitespace-nowrap">
-                            <span className="text-slate-400 font-bold text-xs tracking-widest uppercase flex items-center gap-2 hidden md:flex">
-                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> בקרת מנהל
+                        {/* FLOATING ADMIN CONTROLS (BOTTOM CENTER) */}
+                        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 glass-panel px-6 py-3 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex items-center gap-4 z-50 border-t border-white/20 whitespace-nowrap">
+                            <span className="text-slate-400 font-bold text-xs md:text-sm tracking-widest uppercase flex items-center gap-2 hidden md:flex">
+                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                                בקרת מנהל
                             </span>
                             <div className="h-6 w-px bg-slate-700 hidden md:block"></div>
 
-                            {gameState.step === 'lobby' && <button onClick={() => updateGameState({ step: 'question', questionIndex: 0 })} className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-2 rounded-full font-black">🚀 התחל משחק</button>}
-                            {gameState.step === 'question' && <button onClick={() => updateGameState({ step: 'results' })} className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-full font-black">📊 חשוף תוצאות</button>}
-                            {gameState.step === 'results' && <button onClick={() => updateGameState({ step: 'leaderboard' })} className="bg-gradient-to-r from-yellow-600 to-orange-500 text-white px-6 py-2 rounded-full font-black">🏆 טבלת מובילים</button>}
-                            {gameState.step === 'leaderboard' && (gameState.questionIndex < dynamicQuestions.length - 1 ? <button onClick={() => updateGameState({ step: 'question', questionIndex: gameState.questionIndex + 1 })} className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-full font-black">➔ לשאלה הבאה</button> : <span className="text-green-400 font-black px-4">סיום המשחק! 🎉</span>)}
+                            {gameState.step === 'lobby' && (
+                                <button onClick={() => updateGameState({ step: 'question', questionIndex: 0 })} className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white px-6 py-2 rounded-full font-black text-base md:text-lg shadow-lg hover:shadow-green-500/50 transition-all hover:-translate-y-1">🚀 התחל משחק</button>
+                            )}
+                            
+                            {gameState.step === 'question' && (
+                                <button onClick={() => updateGameState({ step: 'results' })} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-6 py-2 rounded-full font-black text-base md:text-lg shadow-lg hover:shadow-green-500/50 transition-all hover:-translate-y-1">📊 חשוף תוצאות</button>
+                            )}
+
+                            {gameState.step === 'results' && (
+                                <button onClick={() => updateGameState({ step: 'leaderboard' })} className="bg-gradient-to-r from-yellow-600 to-orange-500 hover:from-yellow-500 hover:to-orange-400 text-white px-6 py-2 rounded-full font-black text-base md:text-lg shadow-lg hover:shadow-yellow-500/50 transition-all hover:-translate-y-1">🏆 טבלת מובילים</button>
+                            )}
+
+                            {gameState.step === 'leaderboard' && (
+                                gameState.questionIndex < dynamicQuestions.length - 1 ? (
+                                    <button onClick={() => updateGameState({ step: 'question', questionIndex: gameState.questionIndex + 1 })} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-6 py-2 rounded-full font-black text-base md:text-lg shadow-lg transition-all hover:-translate-y-1">➔ לשאלה הבאה</button>
+                                ) : (
+                                    <span className="text-green-400 font-black px-4 text-sm md:text-base">סיום המשחק! 🎉</span>
+                                )
+                            )}
                             
                             <div className="h-6 w-px bg-slate-700"></div>
-                            <button onClick={() => setAdminTab('questions')} className="text-slate-300 hover:text-white font-bold bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-full text-sm">⚙️ עריכת שאלות</button>
+                            <button onClick={() => setAdminTab('questions')} className="text-slate-300 hover:text-white font-bold bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-full transition-all text-sm md:text-base">⚙️ עריכת שאלות</button>
                         </div>
                     </div>
                 );
             }
 
+            // --- ADMIN: QUESTIONS EDITOR ---
             return (
                 <div className="min-h-screen flex flex-col items-center p-4 w-full overflow-y-auto">
-                    <nav className="w-full max-w-5xl flex justify-between items-center glass-panel p-4 rounded-2xl mb-6 sticky top-4 z-50 shrink-0">
-                        <div className="font-black text-xl text-blue-300">⚙️ פאנל ניהול</div>
-                        <div className="flex gap-2">
-                            <button onClick={() => setAdminTab('game')} className="px-4 py-2 rounded-xl bg-blue-600 font-bold">חזור למשחק ➔</button>
+                    <nav className="w-full max-w-5xl flex flex-wrap justify-between items-center glass-panel-light p-4 rounded-2xl shadow-lg mb-6 sticky top-4 z-50 shrink-0">
+                        <div className="font-black text-xl md:text-2xl text-blue-300 flex items-center gap-3">
+                            ⚙️ פאנל ניהול
+                            <span className="text-xs md:text-sm bg-blue-900/50 text-blue-200 px-3 py-1 rounded-full border border-blue-700 font-normal shadow-inner hidden md:inline">
+                                מצב עריכה
+                            </span>
+                        </div>
+                        <div className="flex gap-2 md:gap-3">
+                            <button onClick={() => setAdminTab('game')} className="px-4 md:px-6 py-2 rounded-xl font-bold transition-all bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg hover:shadow-blue-500/50 text-sm md:text-base">חזור למשחק ➔</button>
+                            <button onClick={() => setIsAdmin(false)} className="px-4 py-2 rounded-xl font-bold bg-red-900/40 text-red-300 hover:bg-red-800/80 border border-red-800 transition-all text-sm md:text-base">יציאה</button>
                         </div>
                     </nav>
 
                     <main className="w-full max-w-5xl pb-10 animate-slide">
-                        <div className="flex justify-between items-center mb-6 bg-slate-800/50 p-5 rounded-3xl border border-slate-700 shadow-xl">
-                            <div className="flex gap-3">
-                                <button onClick={saveAllQuestions} className="bg-blue-600 px-5 py-2.5 rounded-xl font-black">💾 שמור שינויים</button>
-                                <button onClick={addQuestion} className="bg-green-600 px-5 py-2.5 rounded-xl font-black">➕ הוסף שאלה</button>
-                                <button onClick={resetGame} className="bg-red-900 px-5 py-2.5 rounded-xl font-bold">🗑️ איפוס משחק</button>
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 bg-slate-800/50 p-5 rounded-3xl border border-slate-700 shadow-xl gap-4">
+                            <div className="flex flex-wrap gap-3 w-full md:w-auto">
+                                <button onClick={saveAllQuestions} className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-black shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all flex-1 md:flex-none text-sm md:text-base border-2 border-blue-400">💾 שמור שינויים</button>
+                                <button onClick={addQuestion} className="bg-green-600 hover:bg-green-500 text-white px-5 py-2.5 rounded-xl font-black shadow-lg transition-all flex-1 md:flex-none text-sm md:text-base">➕ הוסף שאלה</button>
+                                <button onClick={resetGame} className="bg-red-900/80 hover:bg-red-700 text-red-100 px-5 py-2.5 rounded-xl font-bold shadow-lg border border-red-600 transition-all flex-1 md:flex-none text-sm md:text-base">🗑️ איפוס משחק</button>
                             </div>
                             <h2 className="text-xl font-black text-slate-300">שאלות: {dynamicQuestions.length}</h2>
                         </div>
                         
                         <div className="space-y-6">
                             {dynamicQuestions.map((q, qIdx) => (
-                                <div key={q.id} className="glass-panel p-6 rounded-[2.5rem] shadow-2xl relative">
-                                    <button onClick={() => deleteQuestion(q.id)} className="absolute top-4 left-4 text-red-400">מחק 🗑️</button>
-                                    <div className="mb-5 mt-4">
-                                        <label className="block text-xs font-black text-blue-400 mb-2">שאלה {qIdx + 1}</label>
-                                        <input type="text" className="w-full p-4 bg-slate-900 border-2 border-slate-700 rounded-2xl text-white font-black" value={q.question} onChange={e => updateQuestionData(qIdx, 'question', e.target.value)} />
+                                <div key={q.id} className="glass-panel p-6 md:p-8 rounded-[2.5rem] shadow-2xl relative border-t-4 border-t-slate-600 transition-all hover:border-t-blue-500">
+                                    <button onClick={() => deleteQuestion(q.id)} className="absolute top-4 left-4 md:top-6 md:left-6 text-red-400 hover:text-white bg-red-900/30 hover:bg-red-600 px-3 py-1.5 md:px-4 md:py-2 rounded-xl font-bold transition-all border border-red-800 text-xs md:text-sm">מחק 🗑️</button>
+                                    
+                                    <div className="mb-5 pr-2 mt-4 md:mt-0">
+                                        <label className="block text-xs md:text-sm font-black text-blue-400 mb-2 uppercase tracking-widest">שאלה {qIdx + 1}</label>
+                                        <input type="text" className="w-full p-4 bg-slate-900/80 border-2 border-slate-700 rounded-2xl font-black text-xl md:text-2xl text-white outline-none focus:border-blue-500 transition-colors shadow-inner" value={q.question} onChange={e => updateQuestionData(qIdx, 'question', e.target.value)} />
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-                                        {q.options && q.options.map((opt, oIdx) => (
-                                            <div key={opt.id} className={`flex items-center gap-3 p-3 rounded-2xl border-2 ${opt.correct ? 'border-green-500 bg-green-900/20' : 'border-slate-700 bg-slate-800'}`}>
-                                                <input type="radio" name={`correct_${q.id}`} checked={opt.correct} onChange={() => setCorrectOption(qIdx, oIdx)} />
-                                                <input type="text" className="flex-1 bg-transparent border-none outline-none text-white font-bold" value={opt.text} onChange={e => updateOptionText(qIdx, oIdx, e.target.value)} />
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-900/40 p-4 md:p-5 rounded-3xl border border-slate-700/50 mb-5">
+                                        {q.options.map((opt, oIdx) => (
+                                            <div key={opt.id} className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition-all ${opt.correct ? 'bg-green-900/20 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)]' : 'bg-slate-800 border-slate-700 hover:border-slate-500'}`}>
+                                                <input type="radio" name={`correct_${q.id}`} checked={opt.correct} onChange={() => setCorrectOption(qIdx, oIdx)} className="w-5 h-5 cursor-pointer accent-green-500" />
+                                                <input type="text" className="flex-1 bg-transparent border-none outline-none font-bold text-base md:text-lg text-white placeholder-slate-500" value={opt.text} placeholder={`תשובה ${oIdx+1}`} onChange={e => updateOptionText(qIdx, oIdx, e.target.value)} />
                                             </div>
                                         ))}
                                     </div>
+
                                     <div>
-                                        <label className="block text-xs font-black text-indigo-400 mb-2">לסיכום:</label>
-                                        <input type="text" className="w-full p-4 bg-slate-900 border border-slate-700 rounded-2xl text-white font-bold" value={q.summary} onChange={e => updateQuestionData(qIdx, 'summary', e.target.value)} />
+                                        <label className="block text-xs md:text-sm font-black text-indigo-400 mb-2 uppercase tracking-widest">משפט מסכם (לאחר התוצאות)</label>
+                                        <input type="text" className="w-full p-4 bg-indigo-950/30 border border-indigo-900/50 rounded-2xl text-white font-bold text-base md:text-lg outline-none focus:border-indigo-400 transition-colors" value={q.summary} onChange={e => updateQuestionData(qIdx, 'summary', e.target.value)} />
                                     </div>
                                 </div>
                             ))}
