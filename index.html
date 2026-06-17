@@ -24,13 +24,7 @@
         @keyframes slide-up { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .animate-pop { animation: pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
         @keyframes pop { 0% { transform: scale(0.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        
-        .timer-circle {
-            transition: stroke-dashoffset 1s linear;
-            transform: rotate(-90deg);
-            transform-origin: 50% 50%;
-        }
-        
+        .timer-circle { transition: stroke-dashoffset 1s linear; transform: rotate(-90deg); transform-origin: 50% 50%; }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
@@ -56,7 +50,7 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
         
-        // החדר הקיים והנקי שלך ב-Firebase
+        // מזהה התואם במדויק לזה שבמסד הנתונים
         const appId = 'nta-quiz-dark-v1';
 
         const DEFAULT_QUESTIONS = [
@@ -107,6 +101,7 @@
             const circumference = 2 * Math.PI * radius;
             const strokeDashoffset = circumference - (timeLeft / maxTime) * circumference;
             const isDanger = timeLeft <= 5;
+            
             return (
                 <div className="relative w-16 h-16 flex items-center justify-center mb-2">
                     <svg className="w-full h-full absolute top-0 left-0 timer-circle" viewBox="0 0 60 60">
@@ -123,9 +118,11 @@
             const [playerName, setPlayerName] = useState('');
             const [isAdmin, setIsAdmin] = useState(false);
             const [adminTab, setAdminTab] = useState('game'); 
+            
             const [players, setPlayers] = useState([]);
             const [answers, setAnswers] = useState([]);
             const [dynamicQuestions, setDynamicQuestions] = useState(DEFAULT_QUESTIONS);
+            
             const [gameState, setGameState] = useState({ step: 'login', questionIndex: 0, startedAt: null }); 
             const [selectedOption, setSelectedOption] = useState(null);
             const [timeLeft, setTimeLeft] = useState(30);
@@ -140,9 +137,10 @@
                 const path = db.collection('artifacts').doc(appId).collection('public').doc('data');
                 
                 const unsubQ = path.collection('config').doc('questions').onSnapshot(s => { 
-                    if (s.exists) {
+                    if (s.exists && s.data().list && s.data().list.length > 0) {
                         setDynamicQuestions(s.data().list); 
                     } else {
+                        // כשהמסד ריק - נזריק מיד את כל 14 השאלות שלנו פנימה
                         path.collection('config').doc('questions').set({ list: DEFAULT_QUESTIONS });
                         setDynamicQuestions(DEFAULT_QUESTIONS);
                     }
@@ -175,6 +173,7 @@
                         const elapsed = Math.floor((Date.now() - gameState.startedAt) / 1000);
                         const remaining = Math.max(0, 30 - elapsed);
                         setTimeLeft(remaining);
+                        
                         if (remaining === 0 && isAdmin) {
                             clearInterval(interval);
                             updateGameState({ step: 'results' });
@@ -199,18 +198,21 @@
 
             const submitAnswer = async (optId) => {
                 if (selectedOption !== null || gameState.step !== 'question' || timeLeft <= 0) return;
+                
                 setSelectedOption(optId);
                 const q = dynamicQuestions[gameState.questionIndex];
-                const isCorrect = q?.options?.find(o => o.id === optId)?.correct || false;
+                const opt = q && q.options ? q.options.find(o => o.id === optId) : null;
+                const isCorrect = opt ? opt.correct : false;
 
                 if (isCorrect) {
-                    const points = 50 + Math.floor((timeLeft / 30) * 50);
+                    const speedBonus = Math.floor((timeLeft / 30) * 50);
+                    const points = 50 + speedBonus;
                     const p = players.find(player => player.id === user.uid);
                     await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(user.uid).update({ score: (p && p.score ? p.score : 0) + points });
                 }
 
                 await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('answers').add({
-                    playerId: user.uid, playerName: playerName, questionId: q?.id || 'unknown', answerId: optId, isCorrect: isCorrect, timestamp: Date.now()
+                    playerId: user.uid, playerName: playerName, questionId: q ? q.id : 'unknown', answerId: optId, isCorrect: isCorrect, timestamp: Date.now()
                 });
             };
 
@@ -232,6 +234,7 @@
                 aS.forEach(d => batch.delete(d.ref));
                 await batch.commit();
                 await updateGameState({ step: 'lobby', questionIndex: 0, startedAt: null });
+                alert("המשחק אופס בהצלחה.");
             };
 
             const saveAllQuestions = async () => {
@@ -244,12 +247,20 @@
             };
 
             const addQuestion = () => {
-                const newQ = { id: 'q_' + Date.now(), question: "שאלה חדשה...", options: [{ id: 'a', text: "תשובה 1", correct: true }, { id: 'b', text: "תשובה 2", correct: false }, { id: 'c', text: "תשובה 3", correct: false }, { id: 'd', text: "תשובה 4", correct: false }], summary: "לסיכום:" };
+                const newQ = {
+                    id: 'q_' + Date.now(),
+                    question: "שאלה חדשה...",
+                    options: [
+                        { id: 'a', text: "תשובה 1", correct: true }, { id: 'b', text: "תשובה 2", correct: false },
+                        { id: 'c', text: "תשובה 3", correct: false }, { id: 'd', text: "תשובה 4", correct: false }
+                    ],
+                    summary: "לסיכום:"
+                };
                 setDynamicQuestions([...dynamicQuestions, newQ]);
             };
 
             const deleteQuestion = (id) => {
-                if(!confirm("למחוק שאלה זו?")) return;
+                if(!confirm("למחוק שאלה זו? (יש ללחוץ על 'שמור שינויים' כדי לאשר סופית)")) return;
                 setDynamicQuestions(dynamicQuestions.filter(q => q.id !== id));
             };
 
@@ -279,6 +290,9 @@
             const currentQ = dynamicQuestions && dynamicQuestions[gameState.questionIndex] ? dynamicQuestions[gameState.questionIndex] : null;
             const currentAnswers = answers.filter(a => currentQ && a.questionId === currentQ.id);
 
+            // ==========================================
+            // PLAYER VIEWS
+            // ==========================================
             if (!isAdmin) {
                 if (!currentPlayer) {
                     return (
@@ -316,20 +330,35 @@
                                 <span className="bg-slate-800/80 px-4 py-1 rounded-full text-sm font-bold text-blue-300 border border-slate-700">שאלה {gameState.questionIndex + 1} / {dynamicQuestions.length}</span>
                                 <span className="font-black text-lg bg-blue-900/50 px-4 py-1 rounded-full border border-blue-700/50">⭐ {currentPlayer.score} נק'</span>
                             </div>
-                            <div className="flex justify-center w-full"><Timer timeLeft={timeLeft} maxTime={30} /></div>
+                            
+                            <div className="flex justify-center w-full">
+                                <Timer timeLeft={timeLeft} maxTime={30} />
+                            </div>
+
                             <div className="glass-panel p-5 rounded-[2rem] w-full mb-4 shadow-2xl border-t-4 border-t-blue-500">
                                 <h2 className="text-lg md:text-xl font-black leading-snug text-center">{currentQ.question}</h2>
                             </div>
+
                             <div className="grid grid-cols-1 gap-3 w-full pb-8">
                                 {currentQ.options && currentQ.options.map(opt => {
                                     const isSelected = selectedOption === opt.id;
+                                    
                                     let btnClasses = "p-4 md:p-5 rounded-2xl border-2 transition-all w-full relative ";
-                                    if (isSelected) btnClasses += "bg-blue-600 border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.5)] opacity-100";
-                                    else if (selectedOption !== null || isTimeUp) btnClasses += "opacity-40 bg-slate-800/40 border-slate-800 cursor-not-allowed";
-                                    else btnClasses += "bg-slate-800/60 border-slate-600 hover:border-blue-400 hover:bg-slate-700 opacity-100";
+                                    if (isSelected) {
+                                        btnClasses += "bg-blue-600 border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.5)] opacity-100";
+                                    } else if (selectedOption !== null || isTimeUp) {
+                                        btnClasses += "opacity-40 bg-slate-800/40 border-slate-800 cursor-not-allowed";
+                                    } else {
+                                        btnClasses += "bg-slate-800/60 border-slate-600 hover:border-blue-400 hover:bg-slate-700 opacity-100";
+                                    }
 
                                     return (
-                                        <button key={opt.id} onClick={() => submitAnswer(opt.id)} disabled={selectedOption !== null || isTimeUp} className={btnClasses}>
+                                        <button 
+                                            key={opt.id} 
+                                            onClick={() => submitAnswer(opt.id)}
+                                            disabled={selectedOption !== null || isTimeUp}
+                                            className={btnClasses}
+                                        >
                                             <div className="flex items-center justify-between w-full h-full pointer-events-none gap-3">
                                                 <span className="flex-1 text-right text-sm md:text-base font-bold leading-snug break-words whitespace-normal">{opt.text}</span>
                                                 <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full shrink-0 transition-all duration-300 ${isSelected ? 'bg-blue-300 border-blue-300 shadow-[0_0_15px_rgba(147,197,253,0.9)]' : 'border-2 border-slate-500/50'}`}></div>
@@ -349,7 +378,7 @@
 
                     return (
                         <div className="flex flex-col items-center justify-center min-h-screen p-4 animate-pop text-center overflow-y-auto">
-                            <div className={`glass-panel p-10 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-md border-2 relative overflow-hidden ${isCorrect ? 'border-green-500 bg-gradient-to-b from-green-900/40 to-slate-900/80' : 'border-red-500 bg-gradient-to-b from-red-900/40 to-slate-900/80'}`}>
+                            <div className={`glass-panel p-10 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-md border-2 relative overflow-hidden ${isCorrect ? 'border-green-500' : 'border-red-500'}`}>
                                 {isCorrect ? <IconCheck /> : <IconCross />}
                                 <h2 className={`text-4xl md:text-5xl font-black mb-4 ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>{isCorrect ? "נכון מאוד!" : "טעות..."}</h2>
                                 {!isCorrect && correctOpt && (
@@ -385,9 +414,12 @@
                 return null;
             }
 
+            // ==========================================
+            // ADMIN VIEW
+            // ==========================================
             if (adminTab === 'game') {
                 return (
-                    <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex flex-col items-center overflow-hidden pb-24">
+                    <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 flex flex-col items-center overflow-hidden pb-24">
                         <div className="w-full h-full max-w-6xl px-4 md:px-8 flex flex-col justify-between relative pt-4 pb-6 mx-auto">
                             
                             {gameState.step === 'lobby' && (
@@ -429,6 +461,7 @@
                                             const pct = currentAnswers.length ? Math.round((count / currentAnswers.length) * 100) : 0;
                                             return (
                                                 <div key={opt.id} className="w-full grid grid-cols-[48px_1fr_48px] items-center gap-4 min-h-0">
+                                                    
                                                     <div className="w-12 h-12 shrink-0 flex items-center justify-center">
                                                         {opt.correct && (
                                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="w-12 h-12 text-green-400 drop-shadow-[0_0_12px_rgba(74,222,128,0.9)] animate-pop">
@@ -436,12 +469,15 @@
                                                             </svg>
                                                         )}
                                                     </div>
+                                                    
                                                     <div className={`flex-1 relative overflow-hidden rounded-xl md:rounded-2xl border-2 p-2.5 md:p-3.5 flex justify-between items-center z-10 shadow-xl min-h-0 ${opt.correct ? 'border-green-500 bg-green-900/40' : 'border-slate-700 bg-slate-800/60'}`}>
                                                         <div className="absolute top-0 right-0 h-full bg-gradient-to-l from-blue-600/30 to-indigo-600/30 -z-10 transition-all duration-1000" style={{ width: `${pct}%` }}></div>
                                                         <span className="font-black text-base md:text-lg lg:text-xl leading-snug z-20 text-right pl-4">{opt.text}</span>
                                                         <span className="font-black text-xl md:text-2xl z-20 text-white drop-shadow-md shrink-0">{count} <span className="text-sm md:text-base text-slate-300">({pct}%)</span></span>
                                                     </div>
+
                                                     <div className="w-12 h-12 shrink-0"></div>
+
                                                 </div>
                                             );
                                         })}
@@ -450,7 +486,7 @@
                                     <div className="mt-3 shrink-0 bg-gradient-to-r from-blue-600/90 to-indigo-600/90 p-4 md:p-5 rounded-3xl border-2 border-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.6)] backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-6 w-full max-w-5xl mx-auto">
                                         <div className="flex-1 text-right">
                                             <p className="text-blue-100 font-bold text-xs mb-1 uppercase">לסיכום:</p>
-                                            <p className="text-2xl md:text-3xl lg:text-4xl font-black text-white leading-tight drop-shadow-lg">{currentQ.summary}</p>
+                                            <p className="text-xl md:text-2xl lg:text-3xl font-black text-white leading-tight drop-shadow-lg">{currentQ.summary}</p>
                                         </div>
                                         {currentQ.image && (
                                             <img src={currentQ.image} alt="Traffic Illustration" className="w-1/4 max-w-[260px] h-24 md:h-32 object-cover rounded-xl border border-white/20 shadow-2xl shrink-0" />
@@ -464,7 +500,7 @@
                                     <h2 className="text-5xl md:text-6xl font-black mb-10 text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 to-yellow-500">🏆 המובילים 🏆</h2>
                                     <div className="w-full max-w-2xl space-y-4 flex-1 flex flex-col justify-center">
                                         {leaderboard.map((p, i) => (
-                                            <div key={p.id} className={`flex justify-between items-center p-4 rounded-2xl font-black text-2xl shadow-2xl ${i === 0 ? 'border-2 border-yellow-400 text-yellow-300 scale-105 shadow-[0_0_20px_rgba(234,179,8,0.4)]' : 'bg-slate-800/80 border border-slate-600 text-white'}`}>
+                                            <div key={p.id} className={`flex justify-between items-center p-4 rounded-2xl font-black text-2xl shadow-2xl ${i === 0 ? 'bg-gradient-to-r from-yellow-600/40 to-yellow-500/20 border-2 border-yellow-400 text-yellow-300 scale-105 shadow-[0_0_20px_rgba(234,179,8,0.4)]' : 'bg-slate-800/80 border border-slate-600 text-white'}`}>
                                                 <span>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)+'.'} {p.name}</span>
                                                 <span className="font-bold">{p.score} <span className="text-lg opacity-70">נק'</span></span>
                                             </div>
