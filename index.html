@@ -10,16 +10,9 @@
     
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
-    <script>
-        Babel.registerPreset('react-classic', {
-            presets: [
-                [Babel.availablePresets['react'], { "runtime": "classic" }]
-            ]
-        });
-    </script>
-
+    <script src="https://unpkg.com/@babel/standalone@7.23.0/babel.min.js"></script>
+    
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -48,7 +41,7 @@
 <body class="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white min-h-screen selection:bg-blue-500 selection:text-white">
     <div id="root" class="h-full"></div>
 
-    <script type="text/babel" data-presets="react-classic">
+    <script type="text/babel">
         const { useState, useEffect, useMemo } = React;
 
         const firebaseConfig = {
@@ -65,7 +58,7 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
         
-        // מזהה התואם במדויק למסד הנתונים
+        // החדר הקיים והנכון במסד הנתונים
         const appId = 'nta-quiz-dark-v1';
 
         const DEFAULT_QUESTIONS = [
@@ -134,19 +127,27 @@
             const [isAdmin, setIsAdmin] = useState(false);
             const [adminTab, setAdminTab] = useState('game'); 
             
+            // State למנהל
             const [players, setPlayers] = useState([]);
             const [answers, setAnswers] = useState([]);
-            const [dynamicQuestions, setDynamicQuestions] = useState(DEFAULT_QUESTIONS);
             
+            // State לשחקן (הפרדת כוחות להורדת עומס זיכרון)
+            const [myPlayerData, setMyPlayerData] = useState(null);
+            const [myAnswersData, setMyAnswersData] = useState([]);
+            const [myRank, setMyRank] = useState(null);
+            
+            const [dynamicQuestions, setDynamicQuestions] = useState(DEFAULT_QUESTIONS);
             const [gameState, setGameState] = useState({ step: 'login', questionIndex: 0, startedAt: null }); 
             const [selectedOption, setSelectedOption] = useState(null);
             const [timeLeft, setTimeLeft] = useState(30);
 
+            // חיבור משתמש (אנונימי)
             useEffect(() => {
                 const unsubAuth = auth.onAuthStateChanged(u => { if (!u) auth.signInAnonymously(); setUser(u); });
                 return unsubAuth;
             }, []);
 
+            // 1. האזנה לנתונים גלובליים שכולם חייבים לקבל (הגדרות ושאלות)
             useEffect(() => {
                 if (!user) return;
                 const path = db.collection('artifacts').doc(appId).collection('public').doc('data');
@@ -161,25 +162,63 @@
                 });
                 
                 const unsubState = path.collection('config').doc('state').onSnapshot(s => { 
-                    if (s.exists) {
-                        setGameState(s.data()); 
-                    } else {
+                    if (s.exists) setGameState(s.data()); 
+                    else {
                         const initialState = { step: 'lobby', questionIndex: 0, startedAt: null };
                         path.collection('config').doc('state').set(initialState);
                         setGameState(initialState);
                     }
                 });
                 
+                return () => { unsubQ(); unsubState(); };
+            }, [user]);
+
+            // 2. האזנה כבדה - רק למסך המנהל (מושך את כל המשתתפים ואת כל התשובות)
+            useEffect(() => {
+                if (!user || !isAdmin) return;
+                const path = db.collection('artifacts').doc(appId).collection('public').doc('data');
+                
                 const unsubP = path.collection('players').onSnapshot(s => setPlayers(s.docs.map(d => ({id: d.id, ...d.data()}))));
                 const unsubA = path.collection('answers').onSnapshot(s => setAnswers(s.docs.map(d => ({id: d.id, ...d.data()}))));
                 
-                return () => { unsubQ(); unsubState(); unsubP(); unsubA(); };
-            }, [user]);
+                return () => { unsubP(); unsubA(); };
+            }, [user, isAdmin]);
+
+            // 3. האזנה קלילה - רק לטלפונים של המשתתפים (מושכים רק את המידע של עצמם!)
+            useEffect(() => {
+                if (!user || isAdmin) return;
+                const path = db.collection('artifacts').doc(appId).collection('public').doc('data');
+                
+                const unsubMyPlayer = path.collection('players').doc(user.uid).onSnapshot(doc => {
+                    if (doc.exists) setMyPlayerData({ id: doc.id, ...doc.data() });
+                });
+                
+                const unsubMyAnswers = path.collection('answers').where('playerId', '==', user.uid).onSnapshot(s => {
+                    setMyAnswersData(s.docs.map(d => ({id: d.id, ...d.data()})));
+                });
+
+                return () => { unsubMyPlayer(); unsubMyAnswers(); };
+            }, [user, isAdmin]);
+
+            // שליפת מיקום (Rank) רק פעם אחת במעבר למסך Leaderboard (מונע קריסות)
+            useEffect(() => {
+                if (!isAdmin && gameState.step === 'leaderboard' && user) {
+                    const fetchRank = async () => {
+                        const s = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').get();
+                        const allP = s.docs.map(d => ({id: d.id, ...d.data()}));
+                        allP.sort((a,b) => (b.score||0)-(a.score||0));
+                        const rank = allP.findIndex(p => p.id === user.uid) + 1;
+                        setMyRank(rank);
+                    };
+                    fetchRank();
+                }
+            }, [gameState.step, isAdmin, user]);
 
             useEffect(() => {
                 setSelectedOption(null);
             }, [gameState.questionIndex, gameState.step]);
 
+            // טיימר (מנוהל על ידי המנהל, מוצג אצל כולם)
             useEffect(() => {
                 let interval;
                 if (gameState.step === 'question' && gameState.startedAt) {
@@ -208,6 +247,7 @@
             const handleJoin = async () => {
                 if (!playerName.trim()) return;
                 await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(user.uid).set({name: playerName, score: 0});
+                setMyPlayerData({ name: playerName, score: 0, id: user.uid });
             };
 
             const submitAnswer = async (optId) => {
@@ -221,8 +261,8 @@
                 if (isCorrect) {
                     const speedBonus = Math.floor((timeLeft / 30) * 50);
                     const points = 50 + speedBonus;
-                    const p = players.find(player => player.id === user.uid);
-                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(user.uid).update({ score: (p && p.score ? p.score : 0) + points });
+                    const currentScore = myPlayerData?.score || 0;
+                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('players').doc(user.uid).update({ score: currentScore + points });
                 }
 
                 await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('answers').add({
@@ -232,9 +272,7 @@
 
             const updateGameState = async (newState) => {
                 const updatePayload = { ...newState };
-                if (newState.step === 'question') {
-                    updatePayload.startedAt = Date.now();
-                }
+                if (newState.step === 'question') updatePayload.startedAt = Date.now();
                 await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('config').doc('state').set({...gameState, ...updatePayload}, { merge: true });
             };
 
@@ -300,15 +338,14 @@
             };
 
             const leaderboard = useMemo(() => [...players].sort((a,b) => (b.score||0)-(a.score||0)).slice(0, 5), [players]);
-            const currentPlayer = user ? players.find(p => p.id === user.uid) : null;
             const currentQ = dynamicQuestions && dynamicQuestions[gameState.questionIndex] ? dynamicQuestions[gameState.questionIndex] : null;
             const currentAnswers = answers.filter(a => currentQ && a.questionId === currentQ.id);
 
             // ==========================================
-            // PLAYER VIEWS
+            // PLAYER VIEWS (MOBILE / PARTICIPANTS)
             // ==========================================
             if (!isAdmin) {
-                if (!currentPlayer) {
+                if (!myPlayerData) {
                     return (
                         <div className="flex flex-col items-center justify-center min-h-screen p-4 w-full max-w-md mx-auto animate-slide">
                             <div className="text-center mb-8">
@@ -329,7 +366,7 @@
                     return (
                         <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
                             <div className="glass-panel-light p-10 rounded-[3rem] shadow-2xl max-w-md w-full">
-                                <h2 className="text-4xl font-black mb-4">היי {currentPlayer.name}! 👋</h2>
+                                <h2 className="text-4xl font-black mb-4">היי {myPlayerData.name}! 👋</h2>
                                 <p className="text-2xl font-bold text-blue-300">עוד כמה רגעים מתחילים...</p>
                             </div>
                         </div>
@@ -342,7 +379,7 @@
                         <div className="flex flex-col items-center min-h-screen p-4 w-full max-w-2xl mx-auto pt-6 animate-slide overflow-y-auto">
                             <div className="w-full flex justify-between items-center mb-2">
                                 <span className="bg-slate-800/80 px-4 py-1 rounded-full text-sm font-bold text-blue-300 border border-slate-700">שאלה {gameState.questionIndex + 1} / {dynamicQuestions.length}</span>
-                                <span className="font-black text-lg bg-blue-900/50 px-4 py-1 rounded-full border border-blue-700/50">⭐ {currentPlayer.score} נק'</span>
+                                <span className="font-black text-lg bg-blue-900/50 px-4 py-1 rounded-full border border-blue-700/50">⭐ {myPlayerData.score || 0} נק'</span>
                             </div>
                             
                             <div className="flex justify-center w-full">
@@ -386,7 +423,7 @@
                 }
 
                 if (gameState.step === 'results' && currentQ) {
-                    const myAnswerDoc = answers.find(a => a.playerId === user.uid && a.questionId === currentQ.id);
+                    const myAnswerDoc = myAnswersData.find(a => a.questionId === currentQ.id);
                     const isCorrect = myAnswerDoc ? myAnswerDoc.isCorrect : false;
                     const correctOpt = currentQ.options && currentQ.options.find(o => o.correct);
 
@@ -397,7 +434,7 @@
                                 <h2 className={`text-4xl md:text-5xl font-black mb-4 ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>{isCorrect ? "נכון מאוד!" : "טעות..."}</h2>
                                 {!isCorrect && correctOpt && (
                                     <div className="mt-6 bg-slate-900/80 p-5 rounded-2xl border border-slate-700 text-right shadow-inner">
-                                        <p className="text-xs text-red-300 font-bold mb-2 uppercase tracking-wide">התשובה הנכונה:</p>
+                                        <p className="text-xs md:text-sm text-red-300 font-bold mb-2 uppercase tracking-wide">התשובה הנכונה:</p>
                                         <p className="font-bold text-white text-sm md:text-base">{correctOpt.text}</p>
                                     </div>
                                 )}
@@ -407,7 +444,6 @@
                 }
 
                 if (gameState.step === 'leaderboard') {
-                    const myRank = [...players].sort((a,b) => (b.score||0)-(a.score||0)).findIndex(p => p.id === user.uid) + 1;
                     const isLastQuestion = gameState.questionIndex >= dynamicQuestions.length - 1;
 
                     return (
@@ -415,7 +451,9 @@
                             <div className="glass-panel p-10 rounded-[3rem] shadow-[0_0_50px_rgba(234,179,8,0.2)] max-w-md w-full border-2 border-yellow-500/50 bg-gradient-to-b from-yellow-900/20 to-slate-900">
                                 <div className="text-6xl md:text-7xl mb-6">🏆</div>
                                 <h2 className="text-2xl md:text-3xl font-black mb-4 text-white">הבט במסך המרכזי!</h2>
-                                <p className="text-lg text-slate-300 mb-6">המיקום שלך כרגע: <strong className="text-yellow-400 text-3xl block mt-2">#{myRank}</strong></p>
+                                {myRank !== null && (
+                                    <p className="text-lg text-slate-300 mb-6">המיקום שלך כרגע: <strong className="text-yellow-400 text-3xl block mt-2">#{myRank}</strong></p>
+                                )}
                                 {isLastQuestion ? (
                                     <div className="text-sm text-green-300 font-black bg-green-900/40 p-4 rounded-xl border border-green-500/30">כל הכבוד! סיום המשחק 🎉</div>
                                 ) : (
@@ -429,11 +467,11 @@
             }
 
             // ==========================================
-            // ADMIN VIEW
+            // ADMIN VIEW (PRESENTER SCREEN)
             // ==========================================
             if (adminTab === 'game') {
                 return (
-                    <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 flex flex-col items-center overflow-hidden pb-24">
+                    <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex flex-col items-center overflow-hidden pb-24">
                         <div className="w-full h-full max-w-6xl px-4 md:px-8 flex flex-col justify-between relative pt-4 pb-6 mx-auto">
                             
                             {gameState.step === 'lobby' && (
@@ -475,7 +513,6 @@
                                             const pct = currentAnswers.length ? Math.round((count / currentAnswers.length) * 100) : 0;
                                             return (
                                                 <div key={opt.id} className="w-full grid grid-cols-[48px_1fr_48px] items-center gap-4 min-h-0">
-                                                    
                                                     <div className="w-12 h-12 shrink-0 flex items-center justify-center">
                                                         {opt.correct && (
                                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="w-12 h-12 text-green-400 drop-shadow-[0_0_12px_rgba(74,222,128,0.9)] animate-pop">
@@ -483,15 +520,12 @@
                                                             </svg>
                                                         )}
                                                     </div>
-                                                    
                                                     <div className={`flex-1 relative overflow-hidden rounded-xl md:rounded-2xl border-2 p-2.5 md:p-3.5 flex justify-between items-center z-10 shadow-xl min-h-0 ${opt.correct ? 'border-green-500 bg-green-900/40' : 'border-slate-700 bg-slate-800/60'}`}>
                                                         <div className="absolute top-0 right-0 h-full bg-gradient-to-l from-blue-600/30 to-indigo-600/30 -z-10 transition-all duration-1000" style={{ width: `${pct}%` }}></div>
                                                         <span className="font-black text-base md:text-lg lg:text-xl leading-snug z-20 text-right pl-4">{opt.text}</span>
                                                         <span className="font-black text-xl md:text-2xl z-20 text-white drop-shadow-md shrink-0">{count} <span className="text-sm md:text-base text-slate-300">({pct}%)</span></span>
                                                     </div>
-
                                                     <div className="w-12 h-12 shrink-0"></div>
-
                                                 </div>
                                             );
                                         })}
@@ -500,7 +534,7 @@
                                     <div className="mt-3 shrink-0 bg-gradient-to-r from-blue-600/90 to-indigo-600/90 p-4 md:p-5 rounded-3xl border-2 border-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.6)] backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-6 w-full max-w-5xl mx-auto">
                                         <div className="flex-1 text-right">
                                             <p className="text-blue-100 font-bold text-xs mb-1 uppercase">לסיכום:</p>
-                                            <p className="text-xl md:text-2xl lg:text-3xl font-black text-white leading-tight drop-shadow-lg">{currentQ.summary}</p>
+                                            <p className="text-2xl md:text-3xl lg:text-4xl font-black text-white leading-tight drop-shadow-lg">{currentQ.summary}</p>
                                         </div>
                                         {currentQ.image && (
                                             <img src={currentQ.image} alt="Traffic Illustration" className="w-1/4 max-w-[260px] h-24 md:h-32 object-cover rounded-xl border border-white/20 shadow-2xl shrink-0" />
